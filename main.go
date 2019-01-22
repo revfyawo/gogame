@@ -5,12 +5,19 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-const chunksX = 5
-const chunksY = 5
-
-func mapInterval(val, min, max, newMin, newMax float64) float64 {
-	return (val-min)*(newMax-newMin)/(max-min) + newMin
-}
+const (
+	chunksX    = 5
+	chunksY    = 5
+	waterColor = 0xff0000ff
+	waterLevel = -0.5
+	sandColor  = 0xffffff00
+	sandDiff   = 0.1
+	grassColor = 0xff00ff00
+	rockColor  = 0xff808080
+	rockDiff   = 0.2
+	snowColor  = 0xffffffff
+	snowLevel  = 0.7
+)
 
 func main() {
 	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
@@ -35,12 +42,23 @@ func main() {
 	}
 
 	noise := opensimplex.New(1234567890)
-	step := 0.1
+	step := 0.05
 	for i := range world {
 		for j := range world[i] {
 			val := noise.Eval2(float64(i)*step, float64(j)*step)
-			mappedVal := uint32(mapInterval(val, -1, 1, 0, 255))
-			color := 0xff000000 + mappedVal<<16 + mappedVal<<8 + mappedVal
+			var color uint32
+			switch {
+			case val <= waterLevel:
+				color = waterColor
+			case val > waterLevel && val <= waterLevel+sandDiff:
+				color = sandColor
+			case val > snowLevel-rockDiff && val <= snowLevel:
+				color = rockColor
+			case val > snowLevel:
+				color = snowColor
+			default:
+				color = grassColor
+			}
 			world[i][j] = color
 		}
 	}
