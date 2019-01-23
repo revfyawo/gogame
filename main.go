@@ -9,7 +9,7 @@ func main() {
 	defer sdl.Quit()
 
 	window, err := sdl.CreateWindow("gogame", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED,
-		800, 600, sdl.WINDOW_RESIZABLE)
+		1920, 1080, sdl.WINDOW_RESIZABLE)
 	if err != nil {
 		panic(err)
 	}

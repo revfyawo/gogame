@@ -15,17 +15,19 @@ func Run(window *sdl.Window) {
 	mainLoop(window, world)
 }
 
-func drawWorld(surface *sdl.Surface, world [][]uint32) {
+func drawWorld(renderer *sdl.Renderer, world [][]uint32) {
 	var tileSize int32 = 32
 	for i := range world {
 		for j := range world[i] {
-			surface.FillRect(&sdl.Rect{X: int32(i) * tileSize, Y: int32(j) * tileSize, W: tileSize, H: tileSize}, world[i][j])
+			renderer.SetDrawColor(uint8(world[i][j]>>16&0xFF), uint8(world[i][j]>>8&0xFF), uint8(world[i][j]&0xFF), sdl.ALPHA_OPAQUE)
+			renderer.FillRect(&sdl.Rect{X: int32(i) * tileSize, Y: int32(j) * tileSize, W: tileSize, H: tileSize})
 		}
 	}
+	renderer.SetDrawColor(0, 0, 0, sdl.ALPHA_OPAQUE)
 }
 
 func mainLoop(window *sdl.Window, world [][]uint32) {
-	surface, err := window.GetSurface()
+	renderer, err := sdl.CreateRenderer(window, -1, sdl.RENDERER_ACCELERATED)
 	if err != nil {
 		panic(err)
 	}
@@ -38,23 +40,17 @@ func mainLoop(window *sdl.Window, world [][]uint32) {
 
 	running := true
 	for running {
-		drawWorld(surface, world)
+		renderer.Clear()
+		drawWorld(renderer, world)
 		for polled := sdl.PollEvent(); polled != nil; polled = sdl.PollEvent() {
-			switch event := polled.(type) {
+			switch polled.(type) {
 			case *sdl.QuitEvent:
 				println("Quit")
 				running = false
 				break
-			case *sdl.WindowEvent:
-				if event.Event == sdl.WINDOWEVENT_RESIZED {
-					surface, err = window.GetSurface()
-					if err != nil {
-						panic(err)
-					}
-				}
 			}
 		}
-		window.UpdateSurface()
+		renderer.Present()
 
 		<-ticker.C
 		counter++
