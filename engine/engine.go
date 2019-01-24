@@ -11,7 +11,8 @@ const (
 )
 
 var (
-	Input *InputManager
+	Input   *InputManager
+	Message *MessageManager
 
 	currentScene ecs.Scene
 	currentWorld *ecs.World
@@ -35,8 +36,9 @@ func Run(scene ecs.Scene) {
 		panic(err)
 	}
 
-	// Initialize Input, World and Scene
+	// Initialize Input, Message, World and Scene
 	Input = NewInputManager()
+	Message = NewMessageManager()
 	currentWorld = &ecs.World{}
 	currentScene = scene
 	currentScene.Setup(currentWorld)
