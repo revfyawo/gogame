@@ -1,4 +1,4 @@
-package systems
+package engine
 
 import (
 	"github.com/revfyawo/gogame/ecs"
