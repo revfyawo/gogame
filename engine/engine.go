@@ -2,7 +2,6 @@ package engine
 
 import (
 	"github.com/revfyawo/gogame/ecs"
-	"github.com/revfyawo/gogame/systems"
 	"github.com/veandco/go-sdl2/sdl"
 	"time"
 )
@@ -12,12 +11,13 @@ const (
 )
 
 var (
-	Input *systems.InputSystem
+	Input *InputSystem
 
-	gameSystems []ecs.System
+	currentScene ecs.Scene
+	currentWorld *ecs.World
 )
 
-func Run(argSystems []ecs.System) {
+func Run(scene ecs.Scene) {
 	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
 		panic(err)
 	}
@@ -35,18 +35,11 @@ func Run(argSystems []ecs.System) {
 		panic(err)
 	}
 
-	// Initialize systems
-	for _, sys := range argSystems {
-		gameSystems = append(gameSystems, sys)
-		switch s := sys.(type) {
-		case ecs.Initializer:
-			s.New()
-		}
-	}
-	if Input == nil {
-		Input = systems.NewInputSystem()
-		Input.Register(sdl.SCANCODE_W)
-	}
+	// Initialize Input, World and Scene
+	Input = NewInputSystem()
+	currentWorld = &ecs.World{}
+	currentScene = scene
+	currentScene.Setup(currentWorld)
 
 	var counter int
 	var now, start, lastFrame, lastSecond time.Time
@@ -81,9 +74,7 @@ func Run(argSystems []ecs.System) {
 		Input.Update(delta)
 
 		renderer.Clear()
-		for _, sys := range gameSystems {
-			sys.Update(delta)
-		}
+		currentWorld.Update(delta)
 		renderer.Present()
 	}
 	ticker.Stop()
