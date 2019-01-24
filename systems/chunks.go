@@ -1,19 +1,22 @@
 package systems
 
 import (
+	"github.com/revfyawo/gogame/components"
 	"github.com/revfyawo/gogame/ecs"
+	"github.com/revfyawo/gogame/engine"
 	"github.com/revfyawo/gogame/entities"
 	"time"
 )
 
 type Chunks struct {
-	chunks [][]entities.Chunk
+	chunks map[engine.Point]*entities.Chunk
 }
 
 func (c *Chunks) New() {
-	c.chunks = make([][]entities.Chunk, 1)
-	c.chunks[0] = make([]entities.Chunk, 1)
-	c.chunks[0][0].Generate()
+	c.chunks = make(map[engine.Point]*entities.Chunk)
+	chunk := entities.NewChunk(components.Space{})
+	engine.Message.Dispatch(&NewChunkMessage{chunk})
+	c.chunks[engine.Point{chunk.Rect.X, chunk.Rect.Y}] = chunk
 }
 
 func (*Chunks) Update(d time.Duration) {}
