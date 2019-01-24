@@ -29,7 +29,12 @@ func Run(scene ecs.Scene) {
 	if err != nil {
 		panic(err)
 	}
-	defer window.Destroy()
+	defer func() {
+		err = window.Destroy()
+		if err != nil {
+			panic(err)
+		}
+	}()
 
 	renderer, err := sdl.CreateRenderer(window, -1, sdl.RENDERER_ACCELERATED)
 	if err != nil {
@@ -75,7 +80,11 @@ func Run(scene ecs.Scene) {
 
 		Input.Update()
 
-		renderer.Clear()
+		err = renderer.Clear()
+		if err != nil {
+			panic(err)
+		}
+
 		currentWorld.Update(delta)
 		renderer.Present()
 	}
