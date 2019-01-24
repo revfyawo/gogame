@@ -12,7 +12,7 @@ type Chunks struct {
 	chunks map[engine.Point]*entities.Chunk
 }
 
-func (c *Chunks) New() {
+func (c *Chunks) New(world *ecs.World) {
 	c.chunks = make(map[engine.Point]*entities.Chunk)
 	chunk := entities.NewChunk(components.Space{})
 	engine.Message.Dispatch(&NewChunkMessage{chunk})

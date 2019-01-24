@@ -9,7 +9,7 @@ type World struct {
 func (w *World) AddSystem(s System) {
 	init, ok := s.(Initializer)
 	if ok {
-		init.New()
+		init.New(w)
 	}
 	w.systems = append(w.systems, s)
 }

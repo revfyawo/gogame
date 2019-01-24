@@ -3,12 +3,12 @@ package ecs
 import "time"
 
 type System interface {
-	Update(d time.Duration)
-	RemoveEntity(e *BasicEntity)
+	Update(time.Duration)
+	RemoveEntity(*BasicEntity)
 }
 
 type Initializer interface {
-	New()
+	New(*World)
 }
 
 type MessageType uint64

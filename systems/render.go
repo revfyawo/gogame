@@ -21,7 +21,7 @@ func (c *ChunkRender) PushMessage(m ecs.Message) {
 	c.messages = append(c.messages, mess)
 }
 
-func (c *ChunkRender) New() {
+func (c *ChunkRender) New(world *ecs.World) {
 	c.chunks = make(map[engine.Point]*entities.Chunk)
 	engine.Message.Listen(NewChunkMessageType, c)
 }
