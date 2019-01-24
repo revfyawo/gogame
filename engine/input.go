@@ -1,9 +1,7 @@
 package engine
 
 import (
-	"github.com/revfyawo/gogame/ecs"
 	"github.com/veandco/go-sdl2/sdl"
-	"time"
 )
 
 type KeyMap map[sdl.Scancode]*KeyState
@@ -13,22 +11,18 @@ type KeyState struct {
 	LastState uint8
 }
 
-type InputSystem struct {
+type InputManager struct {
 	queue []sdl.KeyboardEvent // queue of events to be processed next tick
 	keys  KeyMap              // current state of registered keys
 }
 
-func (is *InputSystem) New() {
+func NewInputManager() *InputManager {
+	is := InputManager{}
 	is.keys = make(KeyMap)
-}
-
-func NewInputSystem() *InputSystem {
-	is := InputSystem{}
-	is.New()
 	return &is
 }
 
-func (is *InputSystem) Update(d time.Duration) {
+func (is *InputManager) Update() {
 	// Clear just released
 	for sc := range is.keys {
 		if is.JustReleased(sc) {
@@ -49,13 +43,11 @@ func (is *InputSystem) Update(d time.Duration) {
 	is.queue = is.queue[:0]
 }
 
-func (*InputSystem) RemoveEntity(e *ecs.BasicEntity) {}
-
-func (is *InputSystem) PushEvent(e *sdl.KeyboardEvent) {
+func (is *InputManager) PushEvent(e *sdl.KeyboardEvent) {
 	is.queue = append(is.queue, *e)
 }
 
-func (is *InputSystem) Pressed(sc sdl.Scancode) bool {
+func (is *InputManager) Pressed(sc sdl.Scancode) bool {
 	state, ok := is.keys[sc]
 	if !ok {
 		return false
@@ -63,7 +55,7 @@ func (is *InputSystem) Pressed(sc sdl.Scancode) bool {
 	return state.State == sdl.PRESSED
 }
 
-func (is *InputSystem) JustPressed(sc sdl.Scancode) bool {
+func (is *InputManager) JustPressed(sc sdl.Scancode) bool {
 	state, ok := is.keys[sc]
 	if !ok {
 		return false
@@ -71,7 +63,7 @@ func (is *InputSystem) JustPressed(sc sdl.Scancode) bool {
 	return state.State == sdl.PRESSED && state.LastState == sdl.RELEASED
 }
 
-func (is *InputSystem) JustReleased(sc sdl.Scancode) bool {
+func (is *InputManager) JustReleased(sc sdl.Scancode) bool {
 	state, ok := is.keys[sc]
 	if !ok {
 		return false
@@ -79,7 +71,7 @@ func (is *InputSystem) JustReleased(sc sdl.Scancode) bool {
 	return state.State == sdl.RELEASED && state.LastState == sdl.PRESSED
 }
 
-func (is *InputSystem) Register(sc sdl.Scancode) {
+func (is *InputManager) Register(sc sdl.Scancode) {
 	if _, ok := is.keys[sc]; !ok {
 		is.keys[sc] = &KeyState{}
 	}

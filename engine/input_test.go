@@ -13,41 +13,41 @@ var (
 )
 
 func TestInputSystem(t *testing.T) {
-	is := NewInputSystem()
+	is := NewInputManager()
 	is.Register(sdl.SCANCODE_W)
 	is.Register(sdl.SCANCODE_Q)
 
 	// Press W
 	is.PushEvent(wPress)
-	is.Update(0)
+	is.Update()
 	if !is.JustPressed(sdl.SCANCODE_W) || !is.Pressed(sdl.SCANCODE_W) {
 		t.Fail()
 	}
 
 	// Press W again
 	is.PushEvent(wPress)
-	is.Update(0)
+	is.Update()
 	if is.JustPressed(sdl.SCANCODE_W) || !is.Pressed(sdl.SCANCODE_W) {
 		t.Fail()
 	}
 
 	// Press Q
 	is.PushEvent(qPress)
-	is.Update(0)
+	is.Update()
 	if !is.JustPressed(sdl.SCANCODE_Q) || !is.Pressed(sdl.SCANCODE_Q) {
 		t.Fail()
 	}
 
 	// Release W
 	is.PushEvent(wRelease)
-	is.Update(0)
+	is.Update()
 	if !is.JustReleased(sdl.SCANCODE_W) || is.Pressed(sdl.SCANCODE_W) {
 		t.Fail()
 	}
 
 	// Release Q
 	is.PushEvent(qRelease)
-	is.Update(0)
+	is.Update()
 	if is.JustReleased(sdl.SCANCODE_W) || !is.JustReleased(sdl.SCANCODE_Q) || is.Pressed(sdl.SCANCODE_Q) {
 		t.Fail()
 	}

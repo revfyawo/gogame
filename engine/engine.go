@@ -11,7 +11,7 @@ const (
 )
 
 var (
-	Input *InputSystem
+	Input *InputManager
 
 	currentScene ecs.Scene
 	currentWorld *ecs.World
@@ -36,7 +36,7 @@ func Run(scene ecs.Scene) {
 	}
 
 	// Initialize Input, World and Scene
-	Input = NewInputSystem()
+	Input = NewInputManager()
 	currentWorld = &ecs.World{}
 	currentScene = scene
 	currentScene.Setup(currentWorld)
@@ -71,7 +71,7 @@ func Run(scene ecs.Scene) {
 			}
 		}
 
-		Input.Update(delta)
+		Input.Update()
 
 		renderer.Clear()
 		currentWorld.Update(delta)
