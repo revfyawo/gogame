@@ -11,8 +11,9 @@ const (
 )
 
 var (
-	Input   *InputManager
-	Message *MessageManager
+	Input    *InputManager
+	Message  *MessageManager
+	Renderer *sdl.Renderer
 
 	currentScene ecs.Scene
 	currentWorld *ecs.World
@@ -25,7 +26,7 @@ func Run(scene ecs.Scene) {
 	defer sdl.Quit()
 
 	window, err := sdl.CreateWindow("gogame", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED,
-		800, 600, sdl.WINDOW_MAXIMIZED)
+		0, 0, sdl.WINDOW_FULLSCREEN_DESKTOP)
 	if err != nil {
 		panic(err)
 	}
@@ -36,7 +37,7 @@ func Run(scene ecs.Scene) {
 		}
 	}()
 
-	renderer, err := sdl.CreateRenderer(window, -1, sdl.RENDERER_ACCELERATED)
+	Renderer, err = sdl.CreateRenderer(window, -1, sdl.RENDERER_ACCELERATED)
 	if err != nil {
 		panic(err)
 	}
@@ -70,7 +71,6 @@ func Run(scene ecs.Scene) {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 			switch e := event.(type) {
 			case *sdl.QuitEvent:
-				println("Quit")
 				running = false
 				break
 			case *sdl.KeyboardEvent:
@@ -80,13 +80,13 @@ func Run(scene ecs.Scene) {
 
 		Input.Update()
 
-		err = renderer.Clear()
+		err = Renderer.Clear()
 		if err != nil {
 			panic(err)
 		}
 
 		currentWorld.Update(delta)
-		renderer.Present()
+		Renderer.Present()
 	}
 	ticker.Stop()
 }
