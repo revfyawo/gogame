@@ -4,7 +4,7 @@ import "sync"
 
 var (
 	id   uint64
-	lock sync.Locker
+	lock sync.Mutex
 )
 
 type BasicEntity struct {
@@ -19,10 +19,10 @@ func (e *BasicEntity) ID() uint64 {
 	return e.id
 }
 
-func NewBasic() *BasicEntity {
+func NewBasic() BasicEntity {
 	lock.Lock()
 	defer lock.Unlock()
-	e := &BasicEntity{id}
+	e := BasicEntity{id}
 	id++
 	return e
 }
