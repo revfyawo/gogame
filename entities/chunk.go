@@ -9,14 +9,14 @@ import (
 )
 
 const (
-	TileSize  = 32
-	ChunkTile = 32
-	ChunkSize = ChunkTile * ChunkTile
-	noiseStep = 0.1
+	TileSize  = 8
+	ChunkTile = 16
+	ChunkSize = ChunkTile * TileSize
+	noiseStep = 0.05
 
-	waterLevel = 0
+	waterLevel = -0.5
 	sandDiff   = 0.2
-	snowLevel  = 0.8
+	snowLevel  = 0.5
 	rockDiff   = 0.2
 
 	waterColor = 0xff0000ff
@@ -67,7 +67,7 @@ func (c *Chunk) generate() {
 	}
 	for i := range heightMap {
 		for j := range heightMap[i] {
-			heightMap[i][j] = noise.Eval2(float64(i)*noiseStep, float64(j)*noiseStep)
+			heightMap[i][j] = noise.Eval2(float64(c.Rect.X*ChunkTile+int32(i))*noiseStep, float64(c.Rect.Y*ChunkTile+int32(j))*noiseStep)
 		}
 	}
 
