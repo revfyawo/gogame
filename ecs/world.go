@@ -19,3 +19,7 @@ func (w *World) Update(d time.Duration) {
 		s.Update(d)
 	}
 }
+
+func (w *World) Systems() []System {
+	return w.systems
+}

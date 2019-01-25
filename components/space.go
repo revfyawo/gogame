@@ -1,10 +1,10 @@
 package components
 
 import (
-	"github.com/revfyawo/gogame/engine"
+	"github.com/veandco/go-sdl2/sdl"
 )
 
 type Space struct {
-	Rect  engine.Rect
+	Rect  sdl.Rect
 	Scale float32
 }

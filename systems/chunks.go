@@ -5,18 +5,19 @@ import (
 	"github.com/revfyawo/gogame/ecs"
 	"github.com/revfyawo/gogame/engine"
 	"github.com/revfyawo/gogame/entities"
+	"github.com/veandco/go-sdl2/sdl"
 	"time"
 )
 
 type Chunks struct {
-	chunks map[engine.Point]*entities.Chunk
+	chunks map[sdl.Point]*entities.Chunk
 }
 
 func (c *Chunks) New(world *ecs.World) {
-	c.chunks = make(map[engine.Point]*entities.Chunk)
+	c.chunks = make(map[sdl.Point]*entities.Chunk)
 	chunk := entities.NewChunk(components.Space{})
 	engine.Message.Dispatch(&NewChunkMessage{chunk})
-	c.chunks[engine.Point{chunk.Rect.X, chunk.Rect.Y}] = chunk
+	c.chunks[sdl.Point{chunk.Rect.X, chunk.Rect.Y}] = chunk
 }
 
 func (*Chunks) Update(d time.Duration) {}
