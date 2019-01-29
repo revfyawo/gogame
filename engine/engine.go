@@ -68,13 +68,25 @@ func Run(scene ecs.Scene) {
 		delta = now.Sub(lastFrame)
 		lastFrame = now
 
+		// SDL uses same address for each event: need to copy value before passing it to input manager
+		// can't group cases, because copy wouldn't work because Event is an interface
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 			switch e := event.(type) {
 			case *sdl.QuitEvent:
 				running = false
 				break
 			case *sdl.KeyboardEvent:
-				Input.PushEvent(e)
+				newEvent := *e
+				Input.PushEvent(&newEvent)
+			case *sdl.MouseButtonEvent:
+				newEvent := *e
+				Input.PushEvent(&newEvent)
+			case *sdl.MouseMotionEvent:
+				newEvent := *e
+				Input.PushEvent(&newEvent)
+			case *sdl.MouseWheelEvent:
+				newEvent := *e
+				Input.PushEvent(&newEvent)
 			}
 		}
 
