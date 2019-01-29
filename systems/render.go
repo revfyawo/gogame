@@ -68,11 +68,6 @@ func (c *ChunkRender) addCameraOnce() {
 	c.world.AddSystem(c.camera)
 }
 
-func (c *ChunkRender) getRectCamera(chunk *entities.Chunk, i, j int) sdl.Rect {
-
-	return sdl.Rect{}
-}
-
 func (c *ChunkRender) getVisibleChunks() []ChunkRect {
 	w, h, err := engine.Renderer.GetOutputSize()
 	if err != nil {
