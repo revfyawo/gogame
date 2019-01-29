@@ -7,5 +7,5 @@ type Render struct {
 }
 
 type ChunkRender struct {
-	Textures [][]*sdl.Texture
+	TilesTex *sdl.Texture
 }

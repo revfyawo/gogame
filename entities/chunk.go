@@ -10,7 +10,7 @@ import (
 
 const (
 	TileSize  = 8
-	ChunkTile = 16
+	ChunkTile = 32
 	ChunkSize = ChunkTile * TileSize
 	noiseStep = 0.05
 
@@ -27,8 +27,7 @@ const (
 )
 
 var (
-	noise                                         = opensimplex.New(1234567890)
-	waterTex, sandTex, grassTex, rockTex, snowTex *sdl.Texture
+	noise = opensimplex.New(1234567890)
 )
 
 type Chunk struct {
@@ -47,19 +46,6 @@ func NewChunk(space components.Space) *Chunk {
 
 // Generates a chunk and his textures
 func (c *Chunk) generate() {
-	// Initialize textures if needed
-	if waterTex == nil {
-		initTextures()
-	}
-
-	// Initialize ChunkRender component
-	if c.Textures == nil {
-		c.Textures = make([][]*sdl.Texture, ChunkTile)
-		for i := range c.Textures {
-			c.Textures[i] = make([]*sdl.Texture, ChunkTile)
-		}
-	}
-
 	// Initialize and compute heightmap
 	heightMap := make([][]float64, ChunkTile)
 	for i := range heightMap {
@@ -71,71 +57,36 @@ func (c *Chunk) generate() {
 		}
 	}
 
-	// Assign textures
+	// Initialize chunk tile surface
+	chunkSurface, err := sdl.CreateRGBSurface(0, ChunkSize, ChunkSize, 32, 0xff0000, 0xff00, 0xff, 0xff000000)
+	if err != nil {
+		panic(err)
+	}
+
+	// Assign textures and create chunk texture
 	for i := range heightMap {
 		for j := range heightMap[i] {
 			height := heightMap[i][j]
+			var color uint32
 			switch {
 			case height <= waterLevel:
-				c.Textures[i][j] = waterTex
+				color = waterColor
 			case height > waterLevel && height <= waterLevel+sandDiff:
-				c.Textures[i][j] = sandTex
+				color = sandColor
 			case height >= snowLevel:
-				c.Textures[i][j] = snowTex
+				color = snowColor
 			case height < snowLevel && height >= snowLevel-rockDiff:
-				c.Textures[i][j] = rockTex
+				color = rockColor
 			default:
-				c.Textures[i][j] = grassTex
+				color = grassColor
+			}
+			err = chunkSurface.FillRect(&sdl.Rect{X: TileSize * int32(i), Y: TileSize * int32(j), W: TileSize, H: TileSize}, color)
+			if err != nil {
+				panic(err)
 			}
 		}
 	}
-}
-
-func initTextures() {
-	var err error
-	tileRect := &sdl.Rect{0, 0, TileSize, TileSize}
-	surface, err := sdl.CreateRGBSurface(0, TileSize, TileSize, 32, 0xff0000, 0xff00, 0xff, 0xff000000)
-	if err != nil {
-		panic(err)
-	}
-
-	err = surface.FillRect(tileRect, waterColor)
-	if err != nil {
-		panic(err)
-	}
-	waterTex, err = engine.Renderer.CreateTextureFromSurface(surface)
-	if err != nil {
-		panic(err)
-	}
-	err = surface.FillRect(tileRect, sandColor)
-	if err != nil {
-		panic(err)
-	}
-	sandTex, err = engine.Renderer.CreateTextureFromSurface(surface)
-	if err != nil {
-		panic(err)
-	}
-	err = surface.FillRect(tileRect, snowColor)
-	if err != nil {
-		panic(err)
-	}
-	snowTex, err = engine.Renderer.CreateTextureFromSurface(surface)
-	if err != nil {
-		panic(err)
-	}
-	err = surface.FillRect(tileRect, rockColor)
-	if err != nil {
-		panic(err)
-	}
-	rockTex, err = engine.Renderer.CreateTextureFromSurface(surface)
-	if err != nil {
-		panic(err)
-	}
-	err = surface.FillRect(tileRect, grassColor)
-	if err != nil {
-		panic(err)
-	}
-	grassTex, err = engine.Renderer.CreateTextureFromSurface(surface)
+	c.TilesTex, err = engine.Renderer.CreateTextureFromSurface(chunkSurface)
 	if err != nil {
 		panic(err)
 	}

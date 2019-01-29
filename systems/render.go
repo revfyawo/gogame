@@ -47,19 +47,9 @@ func (c *ChunkRender) Update(d time.Duration) {
 			continue
 		}
 		rect := chunkRect.ScreenPos
-		for i := range chunk.Textures {
-			for j := range chunk.Textures[i] {
-				dst := sdl.Rect{
-					X: rect.X + int32(i)*entities.TileSize,
-					Y: rect.Y + int32(j)*entities.TileSize,
-					W: entities.TileSize,
-					H: entities.TileSize,
-				}
-				err := engine.Renderer.Copy(chunk.Textures[i][j], nil, &dst)
-				if err != nil {
-					panic(err)
-				}
-			}
+		err := engine.Renderer.Copy(chunk.TilesTex, nil, &sdl.Rect{X: rect.X, Y: rect.Y, W: entities.ChunkSize, H: entities.ChunkSize})
+		if err != nil {
+			panic(err)
 		}
 	}
 }
