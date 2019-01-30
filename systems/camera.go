@@ -1,19 +1,19 @@
 package systems
 
 import (
+	"fmt"
+	"github.com/revfyawo/gogame/components"
 	"github.com/revfyawo/gogame/ecs"
 	"github.com/revfyawo/gogame/engine"
-	"github.com/revfyawo/gogame/entities"
 	"github.com/veandco/go-sdl2/sdl"
-	"math"
 	"time"
 )
 
 const speed = 5
 
 type Camera struct {
-	Chunk    sdl.Point
-	Position sdl.Point
+	ChunkPos *components.ChunkPosition
+	scale    float64
 }
 
 func (c *Camera) New(world *ecs.World) {
@@ -21,51 +21,48 @@ func (c *Camera) New(world *ecs.World) {
 	engine.Input.Register(sdl.SCANCODE_A)
 	engine.Input.Register(sdl.SCANCODE_S)
 	engine.Input.Register(sdl.SCANCODE_D)
+	c.ChunkPos = new(components.ChunkPosition)
+	c.scale = 1
 }
 
 func (c *Camera) Update(d time.Duration) {
 	if engine.Input.Pressed(sdl.SCANCODE_W) {
-		c.moveY(-speed)
+		c.ChunkPos.MoveY(-speed)
 	}
 	if engine.Input.Pressed(sdl.SCANCODE_A) {
-		c.moveX(-speed)
+		c.ChunkPos.MoveX(-speed)
 	}
 	if engine.Input.Pressed(sdl.SCANCODE_S) {
-		c.moveY(speed)
+		c.ChunkPos.MoveY(speed)
 	}
 	if engine.Input.Pressed(sdl.SCANCODE_D) {
-		c.moveX(speed)
+		c.ChunkPos.MoveX(speed)
 	}
 }
 
 func (*Camera) RemoveEntity(e *ecs.BasicEntity) {}
 
-func (c *Camera) moveX(speed int32) {
-	newX := c.Position.X + speed
-	if newX >= entities.ChunkSize {
-		c.Position.X = newX % entities.ChunkSize
-		c.Chunk.X += int32(math.Floor(float64(newX) / entities.ChunkSize))
-	} else if newX < 0 {
-		div := int32(math.Floor(float64(newX) / entities.ChunkSize))
-		newX -= div * entities.ChunkSize
-		c.Chunk.X += div
-		c.Position.X = newX
-	} else {
-		c.Position.X = newX
-	}
+func (c *Camera) Scale() float64 {
+	return c.scale
 }
 
-func (c *Camera) moveY(speed int32) {
-	newY := c.Position.Y + speed
-	if newY >= entities.ChunkSize {
-		c.Position.Y = newY % entities.ChunkSize
-		c.Chunk.Y += int32(math.Floor(float64(newY) / entities.ChunkSize))
-	} else if newY < 0 {
-		div := int32(math.Floor(float64(newY) / entities.ChunkSize))
-		newY -= div * entities.ChunkSize
-		c.Chunk.Y += div
-		c.Position.Y = newY
-	} else {
-		c.Position.Y = newY
+func (c *Camera) setScale() {
+	scale := float32(c.scale)
+	err := engine.Renderer.SetScale(scale, scale)
+	if err != nil {
+		panic(err)
 	}
+	fmt.Println("Setting scale to", scale)
+}
+
+func (c *Camera) IncScale(inc float64) {
+	fmt.Println(c.scale)
+	c.scale += inc
+	c.setScale()
+}
+
+func (c *Camera) DecScale(dec float64) {
+	fmt.Println(c.scale)
+	c.scale -= dec
+	c.setScale()
 }

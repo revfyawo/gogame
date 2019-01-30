@@ -1,6 +1,7 @@
 package systems
 
 import (
+	"github.com/revfyawo/gogame/components"
 	"github.com/revfyawo/gogame/ecs"
 	"github.com/revfyawo/gogame/engine"
 	"github.com/revfyawo/gogame/entities"
@@ -47,7 +48,7 @@ func (c *ChunkRender) Update(d time.Duration) {
 			continue
 		}
 		rect := chunkRect.ScreenPos
-		err := engine.Renderer.Copy(chunk.TilesTex, nil, &sdl.Rect{X: rect.X, Y: rect.Y, W: entities.ChunkSize, H: entities.ChunkSize})
+		err := engine.Renderer.Copy(chunk.TilesTex, nil, &sdl.Rect{X: rect.X, Y: rect.Y, W: components.ChunkSize, H: components.ChunkSize})
 		if err != nil {
 			panic(err)
 		}
@@ -80,18 +81,18 @@ func (c *ChunkRender) getVisibleChunks() []ChunkRect {
 	// yChunkMax: bottommost chunk Y coordinate
 	// xMin, yMin: coordinates on screen of leftmost topmost chunk
 	var xChunkMin, xChunkMax, yChunkMin, yChunkMax, xMin, yMin int32
-	xChunkMin = int32(math.Floor(float64(c.camera.Chunk.X*entities.ChunkSize-w/2) / entities.ChunkSize))
-	xChunkMax = int32(math.Ceil(float64(c.camera.Chunk.X*entities.ChunkSize+w/2) / entities.ChunkSize))
-	yChunkMin = int32(math.Floor(float64(c.camera.Chunk.Y*entities.ChunkSize-h/2) / entities.ChunkSize))
-	yChunkMax = int32(math.Ceil(float64(c.camera.Chunk.Y*entities.ChunkSize+h/2) / entities.ChunkSize))
-	xMin = w/2 - c.camera.Position.X - entities.ChunkSize*(c.camera.Chunk.X-xChunkMin)
-	yMin = h/2 - c.camera.Position.Y - entities.ChunkSize*(c.camera.Chunk.Y-yChunkMin)
+	xChunkMin = int32(math.Floor(float64(c.camera.ChunkPos.Chunk.X*components.ChunkSize-w/2) / components.ChunkSize))
+	xChunkMax = int32(math.Ceil(float64(c.camera.ChunkPos.Chunk.X*components.ChunkSize+w/2) / components.ChunkSize))
+	yChunkMin = int32(math.Floor(float64(c.camera.ChunkPos.Chunk.Y*components.ChunkSize-h/2) / components.ChunkSize))
+	yChunkMax = int32(math.Ceil(float64(c.camera.ChunkPos.Chunk.Y*components.ChunkSize+h/2) / components.ChunkSize))
+	xMin = w/2 - c.camera.ChunkPos.Position.X - components.ChunkSize*(c.camera.ChunkPos.Chunk.X-xChunkMin)
+	yMin = h/2 - c.camera.ChunkPos.Position.Y - components.ChunkSize*(c.camera.ChunkPos.Chunk.Y-yChunkMin)
 
 	var visible []ChunkRect
 	for x := xChunkMin; x <= xChunkMax; x++ {
 		for y := yChunkMin; y <= yChunkMax; y++ {
 			chunk := c.chunks[sdl.Point{x, y}]
-			rect := sdl.Rect{xMin + (x-xChunkMin)*entities.ChunkSize, yMin + (y-yChunkMin)*entities.ChunkSize, entities.ChunkSize, entities.ChunkSize}
+			rect := sdl.Rect{xMin + (x-xChunkMin)*components.ChunkSize, yMin + (y-yChunkMin)*components.ChunkSize, components.ChunkSize, components.ChunkSize}
 			visible = append(visible, ChunkRect{chunk, rect})
 		}
 	}

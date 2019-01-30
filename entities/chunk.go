@@ -9,9 +9,6 @@ import (
 )
 
 const (
-	TileSize  = 8
-	ChunkTile = 32
-	ChunkSize = ChunkTile * TileSize
 	noiseStep = 0.05
 
 	waterLevel = -0.5
@@ -38,8 +35,8 @@ type Chunk struct {
 
 func NewChunk(space components.Space) *Chunk {
 	chunk := Chunk{BasicEntity: ecs.NewBasic(), Space: space}
-	chunk.Rect.W = ChunkSize
-	chunk.Rect.H = ChunkSize
+	chunk.Rect.W = components.ChunkSize
+	chunk.Rect.H = components.ChunkSize
 	chunk.generate()
 	return &chunk
 }
@@ -47,18 +44,18 @@ func NewChunk(space components.Space) *Chunk {
 // Generates a chunk and his textures
 func (c *Chunk) generate() {
 	// Initialize and compute heightmap
-	heightMap := make([][]float64, ChunkTile)
+	heightMap := make([][]float64, components.ChunkTile)
 	for i := range heightMap {
-		heightMap[i] = make([]float64, ChunkTile)
+		heightMap[i] = make([]float64, components.ChunkTile)
 	}
 	for i := range heightMap {
 		for j := range heightMap[i] {
-			heightMap[i][j] = noise.Eval2(float64(c.Rect.X*ChunkTile+int32(i))*noiseStep, float64(c.Rect.Y*ChunkTile+int32(j))*noiseStep)
+			heightMap[i][j] = noise.Eval2(float64(c.Rect.X*components.ChunkTile+int32(i))*noiseStep, float64(c.Rect.Y*components.ChunkTile+int32(j))*noiseStep)
 		}
 	}
 
 	// Initialize chunk tile surface
-	chunkSurface, err := sdl.CreateRGBSurface(0, ChunkSize, ChunkSize, 32, 0xff0000, 0xff00, 0xff, 0xff000000)
+	chunkSurface, err := sdl.CreateRGBSurface(0, components.ChunkSize, components.ChunkSize, 32, 0xff0000, 0xff00, 0xff, 0xff000000)
 	if err != nil {
 		panic(err)
 	}
@@ -80,7 +77,7 @@ func (c *Chunk) generate() {
 			default:
 				color = grassColor
 			}
-			err = chunkSurface.FillRect(&sdl.Rect{X: TileSize * int32(i), Y: TileSize * int32(j), W: TileSize, H: TileSize}, color)
+			err = chunkSurface.FillRect(&sdl.Rect{X: components.TileSize * int32(i), Y: components.TileSize * int32(j), W: components.TileSize, H: components.TileSize}, color)
 			if err != nil {
 				panic(err)
 			}
