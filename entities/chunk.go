@@ -9,12 +9,12 @@ import (
 )
 
 const (
-	noiseStep = 0.05
+	noiseStep = 0.01
 
-	waterLevel = -0.5
-	sandDiff   = 0.2
-	snowLevel  = 0.5
-	rockDiff   = 0.2
+	waterLevel = -0.7
+	sandDiff   = 0.3
+	snowLevel  = 0.7
+	rockDiff   = 0.3
 
 	waterColor = 0xff0000ff
 	sandColor  = 0xffffff00
@@ -93,7 +93,12 @@ func (c *Chunk) generateHeightMap(seed int64) [][]float64 {
 	}
 	for i := range heightMap {
 		for j := range heightMap[i] {
-			heightMap[i][j] = noise.Eval2(float64(c.Rect.X*components.ChunkTile+int32(i))*noiseStep, float64(c.Rect.Y*components.ChunkTile+int32(j))*noiseStep)
+			characteristic := noise.Eval2(float64(c.Rect.X*components.ChunkTile+int32(i))*noiseStep, float64(c.Rect.Y*components.ChunkTile+int32(j))*noiseStep) * 16
+			harmonic1 := noise.Eval2(float64(c.Rect.X*components.ChunkTile+int32(i))*2*noiseStep, float64(c.Rect.Y*components.ChunkTile+int32(j))*2*noiseStep) * 8
+			harmonic2 := noise.Eval2(float64(c.Rect.X*components.ChunkTile+int32(i))*4*noiseStep, float64(c.Rect.Y*components.ChunkTile+int32(j))*4*noiseStep) * 4
+			harmonic3 := noise.Eval2(float64(c.Rect.X*components.ChunkTile+int32(i))*8*noiseStep, float64(c.Rect.Y*components.ChunkTile+int32(j))*8*noiseStep) * 2
+			harmonic4 := noise.Eval2(float64(c.Rect.X*components.ChunkTile+int32(i))*16*noiseStep, float64(c.Rect.Y*components.ChunkTile+int32(j))*16*noiseStep)
+			heightMap[i][j] = (characteristic + harmonic1 + harmonic2 + harmonic3 + harmonic4) / 16
 		}
 	}
 	return heightMap
