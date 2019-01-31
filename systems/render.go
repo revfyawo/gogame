@@ -10,6 +10,10 @@ import (
 	"time"
 )
 
+const black = 0xff000000
+
+var gridTexture *sdl.Texture
+
 type ChunkInfo struct {
 	Chunk     *entities.Chunk
 	ScreenPos *sdl.Rect
@@ -19,6 +23,7 @@ type ChunkRender struct {
 	chunks   map[sdl.Point]*entities.Chunk
 	messages []*NewChunkMessage
 	camera   *Camera
+	grid     bool
 }
 
 func (c *ChunkRender) PushMessage(m ecs.Message) {
@@ -44,12 +49,21 @@ func (c *ChunkRender) New(world *ecs.World) {
 	if !camera {
 		panic("need to add camera system before render system")
 	}
+
+	if gridTexture == nil {
+		initGridTexture()
+	}
+	engine.Input.Register(sdl.SCANCODE_F1)
 }
 
 func (c *ChunkRender) Update(d time.Duration) {
 	for _, m := range c.messages {
 		c.chunks[sdl.Point{m.Chunk.Rect.X, m.Chunk.Rect.Y}] = m.Chunk
 	}
+	if engine.Input.JustPressed(sdl.SCANCODE_F1) {
+		c.grid = !c.grid
+	}
+
 	chunkRects := c.getVisibleChunks()
 	for _, chunkRect := range chunkRects {
 		chunk := chunkRect.Chunk
@@ -62,6 +76,12 @@ func (c *ChunkRender) Update(d time.Duration) {
 		err := engine.Renderer.Copy(chunk.TilesTex, nil, dst)
 		if err != nil {
 			panic(err)
+		}
+		if c.grid {
+			err = engine.Renderer.Copy(gridTexture, nil, dst)
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 }
@@ -113,4 +133,41 @@ func (c *ChunkRender) getVisibleChunks() []ChunkInfo {
 		}
 	}
 	return visible
+}
+
+func initGridTexture() {
+	surface, err := sdl.CreateRGBSurface(0, components.ChunkSize, components.ChunkSize, 32, 0xff0000, 0xff00, 0xff, 0xff000000)
+	if err != nil {
+		panic(err)
+	}
+	defer surface.Free()
+
+	// Make surface transparent
+	err = surface.FillRect(&sdl.Rect{0, 0, components.ChunkSize, components.ChunkSize}, 0)
+	if err != nil {
+		panic(err)
+	}
+
+	for i := 0; i < components.ChunkTile+1; i++ {
+		var size int32
+		switch i {
+		case 0, components.ChunkTile:
+			size = 4
+		default:
+			size = 2
+		}
+		err = surface.FillRect(&sdl.Rect{int32(i)*components.TileSize - size/2, 0, size, components.ChunkSize}, black)
+		if err != nil {
+			panic(err)
+		}
+		err = surface.FillRect(&sdl.Rect{0, int32(i)*components.TileSize - size/2, components.ChunkSize, size}, black)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	gridTexture, err = engine.Renderer.CreateTextureFromSurface(surface)
+	if err != nil {
+		panic(err)
+	}
 }

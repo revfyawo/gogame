@@ -32,10 +32,13 @@ func NewInputManager() *InputManager {
 }
 
 func (im *InputManager) Update() {
-	// Clear just released & mouse wheel
+	// Clear just released, just pressed & mouse wheel
 	for sc := range im.keys {
 		if im.JustReleased(sc) {
 			im.keys[sc].LastState = sdl.RELEASED
+		}
+		if im.JustPressed(sc) {
+			im.keys[sc].LastState = sdl.PRESSED
 		}
 	}
 	im.mouse.wheel = 0

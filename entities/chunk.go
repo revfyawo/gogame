@@ -29,27 +29,17 @@ type Chunk struct {
 	components.ChunkRender
 }
 
-func NewChunk(space components.Space, seed int64, grid bool) *Chunk {
+func NewChunk(space components.Space, seed int64) *Chunk {
 	chunk := Chunk{BasicEntity: ecs.NewBasic(), Space: space}
 	chunk.Rect.W = components.ChunkSize
 	chunk.Rect.H = components.ChunkSize
-	chunk.Generate(seed, grid)
+	chunk.Generate(seed)
 	return &chunk
 }
 
 // Generates a chunk and his textures
-func (c *Chunk) Generate(seed int64, grid bool) {
-	noise := opensimplex.New(seed)
-	// Initialize and compute heightmap
-	heightMap := make([][]float64, components.ChunkTile)
-	for i := range heightMap {
-		heightMap[i] = make([]float64, components.ChunkTile)
-	}
-	for i := range heightMap {
-		for j := range heightMap[i] {
-			heightMap[i][j] = noise.Eval2(float64(c.Rect.X*components.ChunkTile+int32(i))*noiseStep, float64(c.Rect.Y*components.ChunkTile+int32(j))*noiseStep)
-		}
-	}
+func (c *Chunk) Generate(seed int64) {
+	heightMap := c.generateHeightMap(seed)
 
 	// Initialize chunk tile surface
 	chunkSurface, err := sdl.CreateRGBSurface(0, components.ChunkSize, components.ChunkSize, 32, 0xff0000, 0xff00, 0xff, 0xff000000)
@@ -76,28 +66,6 @@ func (c *Chunk) Generate(seed int64, grid bool) {
 				color = grassColor
 			}
 			rect := &sdl.Rect{X: components.TileSize * int32(i), Y: components.TileSize * int32(j), W: components.TileSize, H: components.TileSize}
-			if grid {
-				if i == 0 {
-					rect.X += 3
-					rect.W -= 4
-				} else if i == components.ChunkTile-1 {
-					rect.X += 1
-					rect.W -= 4
-				} else {
-					rect.X += 1
-					rect.W -= 2
-				}
-				if j == 0 {
-					rect.Y += 3
-					rect.H -= 4
-				} else if j == components.ChunkTile-1 {
-					rect.Y += 1
-					rect.H -= 4
-				} else {
-					rect.Y += 1
-					rect.H -= 2
-				}
-			}
 			err = chunkSurface.FillRect(rect, color)
 			if err != nil {
 				panic(err)
@@ -114,4 +82,19 @@ func (c *Chunk) Generate(seed int64, grid bool) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func (c *Chunk) generateHeightMap(seed int64) [][]float64 {
+	noise := opensimplex.New(seed)
+	// Initialize and compute heightmap
+	heightMap := make([][]float64, components.ChunkTile)
+	for i := range heightMap {
+		heightMap[i] = make([]float64, components.ChunkTile)
+	}
+	for i := range heightMap {
+		for j := range heightMap[i] {
+			heightMap[i][j] = noise.Eval2(float64(c.Rect.X*components.ChunkTile+int32(i))*noiseStep, float64(c.Rect.Y*components.ChunkTile+int32(j))*noiseStep)
+		}
+	}
+	return heightMap
 }
