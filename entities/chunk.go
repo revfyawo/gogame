@@ -23,26 +23,23 @@ const (
 	snowColor  = 0xffffffff
 )
 
-var (
-	noise = opensimplex.New(1234567890)
-)
-
 type Chunk struct {
 	ecs.BasicEntity
 	components.Space
 	components.ChunkRender
 }
 
-func NewChunk(space components.Space) *Chunk {
+func NewChunk(space components.Space, seed int64) *Chunk {
 	chunk := Chunk{BasicEntity: ecs.NewBasic(), Space: space}
 	chunk.Rect.W = components.ChunkSize
 	chunk.Rect.H = components.ChunkSize
-	chunk.generate()
+	chunk.Generate(seed)
 	return &chunk
 }
 
 // Generates a chunk and his textures
-func (c *Chunk) generate() {
+func (c *Chunk) Generate(seed int64) {
+	noise := opensimplex.New(seed)
 	// Initialize and compute heightmap
 	heightMap := make([][]float64, components.ChunkTile)
 	for i := range heightMap {
