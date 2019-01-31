@@ -12,25 +12,35 @@ import (
 
 type Chunks struct {
 	chunks map[sdl.Point]*entities.Chunk
+	grid   bool
+	seed   int64
 }
 
 func (c *Chunks) New(world *ecs.World) {
 	c.chunks = make(map[sdl.Point]*entities.Chunk)
+	c.seed = 1234567890
 	for x := -5; x <= 5; x++ {
 		for y := -5; y <= 5; y++ {
-			chunk := entities.NewChunk(components.Space{Rect: sdl.Rect{X: int32(x), Y: int32(y)}}, 1234567890)
+			chunk := entities.NewChunk(components.Space{Rect: sdl.Rect{X: int32(x), Y: int32(y)}}, c.seed, c.grid)
 			engine.Message.Dispatch(&NewChunkMessage{chunk})
 			c.chunks[sdl.Point{chunk.Rect.X, chunk.Rect.Y}] = chunk
 		}
 	}
+	engine.Input.Register(sdl.SCANCODE_F1)
 	engine.Input.Register(sdl.SCANCODE_F5)
 }
 
 func (c *Chunks) Update(d time.Duration) {
 	if engine.Input.Pressed(sdl.SCANCODE_F5) {
-		seed := rand.Int63()
+		c.seed = rand.Int63()
 		for _, chunk := range c.chunks {
-			chunk.Generate(seed)
+			chunk.Generate(c.seed, c.grid)
+		}
+	}
+	if engine.Input.Pressed(sdl.SCANCODE_F1) {
+		c.grid = !c.grid
+		for _, chunk := range c.chunks {
+			chunk.Generate(c.seed, c.grid)
 		}
 	}
 }

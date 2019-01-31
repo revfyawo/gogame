@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"flag"
 	"github.com/revfyawo/gogame/ecs"
 	"github.com/veandco/go-sdl2/sdl"
 	"time"
@@ -20,6 +21,7 @@ var (
 )
 
 func Run(scene ecs.Scene) {
+	flag.Parse()
 	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
 		panic(err)
 	}

@@ -29,16 +29,16 @@ type Chunk struct {
 	components.ChunkRender
 }
 
-func NewChunk(space components.Space, seed int64) *Chunk {
+func NewChunk(space components.Space, seed int64, grid bool) *Chunk {
 	chunk := Chunk{BasicEntity: ecs.NewBasic(), Space: space}
 	chunk.Rect.W = components.ChunkSize
 	chunk.Rect.H = components.ChunkSize
-	chunk.Generate(seed)
+	chunk.Generate(seed, grid)
 	return &chunk
 }
 
 // Generates a chunk and his textures
-func (c *Chunk) Generate(seed int64) {
+func (c *Chunk) Generate(seed int64, grid bool) {
 	noise := opensimplex.New(seed)
 	// Initialize and compute heightmap
 	heightMap := make([][]float64, components.ChunkTile)
@@ -56,6 +56,7 @@ func (c *Chunk) Generate(seed int64) {
 	if err != nil {
 		panic(err)
 	}
+	defer chunkSurface.Free()
 
 	// Assign textures and create chunk texture
 	for i := range heightMap {
@@ -74,10 +75,39 @@ func (c *Chunk) Generate(seed int64) {
 			default:
 				color = grassColor
 			}
-			err = chunkSurface.FillRect(&sdl.Rect{X: components.TileSize * int32(i), Y: components.TileSize * int32(j), W: components.TileSize, H: components.TileSize}, color)
+			rect := &sdl.Rect{X: components.TileSize * int32(i), Y: components.TileSize * int32(j), W: components.TileSize, H: components.TileSize}
+			if grid {
+				if i == 0 {
+					rect.X += 3
+					rect.W -= 4
+				} else if i == components.ChunkTile-1 {
+					rect.X += 1
+					rect.W -= 4
+				} else {
+					rect.X += 1
+					rect.W -= 2
+				}
+				if j == 0 {
+					rect.Y += 3
+					rect.H -= 4
+				} else if j == components.ChunkTile-1 {
+					rect.Y += 1
+					rect.H -= 4
+				} else {
+					rect.Y += 1
+					rect.H -= 2
+				}
+			}
+			err = chunkSurface.FillRect(rect, color)
 			if err != nil {
 				panic(err)
 			}
+		}
+	}
+	if c.TilesTex != nil {
+		err = c.TilesTex.Destroy()
+		if err != nil {
+			panic(err)
 		}
 	}
 	c.TilesTex, err = engine.Renderer.CreateTextureFromSurface(chunkSurface)
