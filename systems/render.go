@@ -20,10 +20,13 @@ type ChunkInfo struct {
 }
 
 type ChunkRender struct {
-	chunks   map[sdl.Point]*entities.Chunk
-	messages chan ecs.Message
-	camera   *Camera
-	grid     bool
+	chunks      map[sdl.Point]*entities.Chunk
+	visible     sdl.Rect
+	visibleInfo []ChunkInfo
+	lastVisible sdl.Rect
+	messages    chan ecs.Message
+	camera      *Camera
+	grid        bool
 }
 
 func (c *ChunkRender) New(world *ecs.World) {
@@ -73,13 +76,18 @@ func (c *ChunkRender) Update(d time.Duration) {
 		c.grid = !c.grid
 	}
 
-	chunkRects := c.getVisibleChunks()
-	for _, chunkRect := range chunkRects {
-		chunk := chunkRect.Chunk
+	c.getVisibleChunks()
+	if c.lastVisible != c.visible {
+		c.freeHiddenChunks()
+	}
+	c.lastVisible = c.visible
+
+	for _, info := range c.visibleInfo {
+		chunk := info.Chunk
 		if chunk == nil {
 			continue
 		}
-		rect := chunkRect.ScreenPos
+		rect := info.ScreenPos
 		scaleCS := int32(components.ChunkSize * c.camera.Scale)
 		dst := &sdl.Rect{rect.X, rect.Y, scaleCS, scaleCS}
 		if chunk.TilesTex == nil {
@@ -100,7 +108,7 @@ func (c *ChunkRender) Update(d time.Duration) {
 
 func (*ChunkRender) RemoveEntity(e *ecs.BasicEntity) {}
 
-func (c *ChunkRender) getVisibleChunks() []ChunkInfo {
+func (c *ChunkRender) getVisibleChunks() {
 	w, h, err := engine.Renderer.GetOutputSize()
 	if err != nil {
 		panic(err)
@@ -126,9 +134,10 @@ func (c *ChunkRender) getVisibleChunks() []ChunkInfo {
 	if camChunkScreen.Y+int32(scaledCS) <= h {
 		down = int32(math.Ceil(float64(h-camChunkScreen.Y-scaledCS) / float64(scaledCS)))
 	}
+	c.visible = sdl.Rect{camPos.Chunk.X - left, camPos.Chunk.Y - up, left + right + 1, up + down + 1}
 
-	// Fill and return visible chunk info
-	var visible []ChunkInfo
+	// Fill visible chunk info
+	c.visibleInfo = c.visibleInfo[:0]
 	for x := camPos.Chunk.X - left; x <= camPos.Chunk.X+right; x++ {
 		for y := camPos.Chunk.Y - up; y <= camPos.Chunk.Y+down; y++ {
 			screenPos := &sdl.Rect{
@@ -141,10 +150,87 @@ func (c *ChunkRender) getVisibleChunks() []ChunkInfo {
 				Chunk:     c.chunks[sdl.Point{x, y}],
 				ScreenPos: screenPos,
 			}
-			visible = append(visible, chunkInfo)
+			c.visibleInfo = append(c.visibleInfo, chunkInfo)
 		}
 	}
-	return visible
+
+}
+
+func (c *ChunkRender) freeHiddenChunks() {
+	diff := sdl.Rect{
+		c.visible.X - c.lastVisible.X,
+		c.visible.Y - c.lastVisible.Y,
+		c.lastVisible.X + c.lastVisible.W - c.visible.X - c.visible.W,
+		c.lastVisible.Y + c.lastVisible.H - c.visible.Y - c.visible.H,
+	}
+	if diff.X > 0 {
+		for x := c.lastVisible.X; x != c.visible.X; x++ {
+			for y := c.lastVisible.Y; y < c.lastVisible.Y+c.lastVisible.H; y++ {
+				chunk := c.chunks[sdl.Point{x, y}]
+				if chunk == nil {
+					continue
+				}
+				if chunk.TilesTex != nil {
+					err := chunk.TilesTex.Destroy()
+					if err != nil {
+						panic(err)
+					}
+					chunk.TilesTex = nil
+				}
+			}
+		}
+	}
+	if diff.Y > 0 {
+		for y := c.lastVisible.Y; y != c.visible.Y; y++ {
+			for x := c.lastVisible.X; x < c.lastVisible.X+c.lastVisible.W; x++ {
+				chunk := c.chunks[sdl.Point{x, y}]
+				if chunk == nil {
+					continue
+				}
+				if chunk.TilesTex != nil {
+					err := chunk.TilesTex.Destroy()
+					if err != nil {
+						panic(err)
+					}
+					chunk.TilesTex = nil
+				}
+			}
+		}
+	}
+	if diff.W > 0 {
+		for x := c.lastVisible.X + c.lastVisible.W; x != c.visible.X+c.visible.W; x-- {
+			for y := c.lastVisible.Y; y < c.lastVisible.Y+c.lastVisible.H; y++ {
+				chunk := c.chunks[sdl.Point{x, y}]
+				if chunk == nil {
+					continue
+				}
+				if chunk.TilesTex != nil {
+					err := chunk.TilesTex.Destroy()
+					if err != nil {
+						panic(err)
+					}
+					chunk.TilesTex = nil
+				}
+			}
+		}
+	}
+	if diff.H > 0 {
+		for y := c.lastVisible.Y + c.lastVisible.H; y != c.visible.Y+c.visible.H; y-- {
+			for x := c.lastVisible.X; x < c.lastVisible.X+c.lastVisible.W; x++ {
+				chunk := c.chunks[sdl.Point{x, y}]
+				if chunk == nil {
+					continue
+				}
+				if chunk.TilesTex != nil {
+					err := chunk.TilesTex.Destroy()
+					if err != nil {
+						panic(err)
+					}
+					chunk.TilesTex = nil
+				}
+			}
+		}
+	}
 }
 
 func initGridTexture() {

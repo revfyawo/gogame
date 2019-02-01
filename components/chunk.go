@@ -6,11 +6,11 @@ import (
 
 const (
 	HeightNoiseStep = 0.01
-	TempNoiseStep   = 0.001
-	RainNoiseStep   = 0.001
+	TempNoiseStep   = 0.003
+	RainNoiseStep   = 0.003
 
-	WaterLevel  = -0.8
-	ShallowDiff = 0.125
+	WaterLevel  = -0.9
+	ShallowDiff = 0.2
 )
 
 type Chunk struct {

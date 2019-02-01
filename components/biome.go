@@ -23,15 +23,12 @@ const (
 const (
 	HotDesert Biome = iota
 	Savanna
-	TropicalDry
-	TropicalWet
+	TropicalForest
 	Grassland
 	TemperateForest
-	TemperateWet
 	TemperateDesert
 	RockDesert
-	BorealDry
-	BorealWet
+	BorealForest
 	ColdDesert
 	FrostDesert
 	Tundra
@@ -40,28 +37,25 @@ const (
 )
 
 var BiomeColors = []uint32{
-	0xffe34234, // Hot desert: Vermillon
+	0xffff6347, // Hot desert: Tomato
 	0xffe4d96f, // Savanna: Straw
-	0xff0bda51, // Tropical dry: Malachite
-	0xff008000, // Tropical wet: Office green
+	0xff0bda51, // Tropical Forest: Malachite
 	0xff7cfc00, // Grassland: Lawn green
 	0xff228b22, // Temperate forest: Forest green
-	0xff00ff7f, // Temperate wet: Spring green
 	0xfffdee00, // Temperate desert: Cobalt yellow
 	0xffc0c0c0, // Rock desert: Silver
-	0xff01796f, // Boreal dry: Pine green
-	0xff29ab87, // Boreal wet: Jungle green
-	0xfff0ffff, // Cold desert: Azure white
+	0xff29ab87, // Boreal forest: Jungle green
+	0xffe1a95f, // Cold desert: Earth yellow
 	0xff99ffff, // Frost desert: Ice blue
 	0xfffffafa, // Tundra: Snow white
-	0xff00ffff, // Shallow water: Cyan
-	0xff009dc4, // Deep water: Pacific blue
+	0xff87ceeb, // Shallow water: Sky blue
+	0xff4000ff, // Deep water: Ultramarine
 }
 
 var Biomes = [][]Biome{
 	{FrostDesert, FrostDesert, Tundra, Tundra, Tundra},
-	{ColdDesert, BorealDry, BorealDry, BorealWet, BorealWet},
-	{RockDesert, Grassland, TemperateForest, TemperateForest, TemperateWet},
-	{TemperateDesert, Grassland, TemperateForest, TemperateForest, TemperateWet},
-	{HotDesert, HotDesert, Savanna, TropicalDry, TropicalWet},
+	{ColdDesert, ColdDesert, BorealForest, BorealForest, BorealForest},
+	{RockDesert, Grassland, Grassland, TemperateForest, TemperateForest},
+	{TemperateDesert, TemperateDesert, Grassland, TemperateForest, TropicalForest},
+	{HotDesert, HotDesert, Savanna, TropicalForest, TropicalForest},
 }
