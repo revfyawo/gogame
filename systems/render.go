@@ -21,22 +21,15 @@ type ChunkInfo struct {
 
 type ChunkRender struct {
 	chunks   map[sdl.Point]*entities.Chunk
-	messages []*NewChunkMessage
+	messages chan ecs.Message
 	camera   *Camera
 	grid     bool
 }
 
-func (c *ChunkRender) PushMessage(m ecs.Message) {
-	mess, ok := m.(*NewChunkMessage)
-	if !ok {
-		return
-	}
-	c.messages = append(c.messages, mess)
-}
-
 func (c *ChunkRender) New(world *ecs.World) {
 	c.chunks = make(map[sdl.Point]*entities.Chunk)
-	engine.Message.Listen(NewChunkMessageType, c)
+	c.messages = make(chan ecs.Message, 10)
+	engine.Message.Listen(NewChunkMessageType, c.messages)
 
 	camera := false
 	for _, sys := range world.Systems() {
@@ -57,8 +50,24 @@ func (c *ChunkRender) New(world *ecs.World) {
 }
 
 func (c *ChunkRender) Update(d time.Duration) {
-	for _, m := range c.messages {
-		c.chunks[sdl.Point{m.Chunk.Rect.X, m.Chunk.Rect.Y}] = m.Chunk
+	pending := true
+	for pending {
+		select {
+		case message := <-c.messages:
+			switch m := message.(type) {
+			case *NewChunkMessage:
+				c.chunks[sdl.Point{m.Chunk.Rect.X, m.Chunk.Rect.Y}] = m.Chunk
+				if m.Chunk.TilesTex != nil {
+					err := m.Chunk.TilesTex.Destroy()
+					if err != nil {
+						panic(err)
+					}
+					m.Chunk.TilesTex = nil
+				}
+			}
+		default:
+			pending = false
+		}
 	}
 	if engine.Input.JustPressed(sdl.SCANCODE_F1) {
 		c.grid = !c.grid

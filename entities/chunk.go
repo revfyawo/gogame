@@ -24,13 +24,6 @@ func NewChunk(space components.Space) *Chunk {
 // Generates a chunk heigh, rain and temp
 func (c *Chunk) Generate(seedHeight, seedTemp, seedRain int64) {
 	c.Chunk.Generate(seedHeight, seedTemp, seedRain, c.Rect.X, c.Rect.Y)
-	if c.TilesTex != nil {
-		err := c.TilesTex.Destroy()
-		if err != nil {
-			panic(err)
-		}
-		c.TilesTex = nil
-	}
 }
 
 // Generates the chunk texture

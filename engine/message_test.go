@@ -12,30 +12,31 @@ func (MessageTest) Type() ecs.MessageType {
 }
 
 type MessageSystemTest struct {
-	received ecs.Message
-}
-
-func (sys *MessageSystemTest) PushMessage(m ecs.Message) {
-	sys.received = m
+	ch chan ecs.Message
 }
 
 func TestMessageManager(t *testing.T) {
 	mm := NewMessageManager()
 	mess := &MessageTest{}
-	sys := &MessageSystemTest{}
+	sys := &MessageSystemTest{make(chan ecs.Message, 1)}
 
 	mm.Dispatch(mess)
-	if sys.received != nil {
+	select {
+	case <-sys.ch:
 		t.Error("sys received a message without listening")
+	default:
 	}
 
-	mm.Listen(mess.Type(), sys)
+	mm.Listen(mess.Type(), sys.ch)
 	if mm.listeners[mess.Type()] == nil {
 		t.Fatal("mm did not register sys")
 	}
 
 	mm.Dispatch(mess)
-	if sys.received == nil {
+	select {
+	case <-sys.ch:
+		break
+	default:
 		t.Error("sys did not receive the message")
 	}
 }

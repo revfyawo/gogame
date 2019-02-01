@@ -26,27 +26,27 @@ func (c *Chunks) New(world *ecs.World) {
 	for x := -20; x <= 20; x++ {
 		for y := -20; y <= 20; y++ {
 			chunk := entities.NewChunk(components.Space{Rect: sdl.Rect{X: int32(x), Y: int32(y)}})
-			chunk.Generate(c.seedHeight, c.seedRain, c.seedTemp)
-			engine.Message.Dispatch(&NewChunkMessage{chunk})
 			c.chunks[sdl.Point{chunk.Rect.X, chunk.Rect.Y}] = chunk
+			go c.generateChunk(chunk)
 		}
 	}
 	engine.Input.Register(sdl.SCANCODE_F5)
 }
 
 func (c *Chunks) Update(d time.Duration) {
-	if engine.Input.Pressed(sdl.SCANCODE_F5) {
+	if engine.Input.JustPressed(sdl.SCANCODE_F5) {
 		c.seedHeight = rand.Int63()
 		c.seedTemp = rand.Int63()
 		c.seedRain = rand.Int63()
 		for _, chunk := range c.chunks {
-			chunk.Generate(c.seedHeight, c.seedRain, c.seedTemp)
+			go c.generateChunk(chunk)
 		}
 	}
 }
 
 func (*Chunks) RemoveEntity(e *ecs.BasicEntity) {}
 
-func (c *Chunks) generateInitialChunks() {
-
+func (c *Chunks) generateChunk(chunk *entities.Chunk) {
+	chunk.Generate(c.seedHeight, c.seedRain, c.seedTemp)
+	engine.Message.Dispatch(&NewChunkMessage{chunk})
 }
