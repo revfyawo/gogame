@@ -73,6 +73,9 @@ func (c *ChunkRender) Update(d time.Duration) {
 		rect := chunkRect.ScreenPos
 		scaleCS := int32(components.ChunkSize * c.camera.Scale)
 		dst := &sdl.Rect{rect.X, rect.Y, scaleCS, scaleCS}
+		if chunk.TilesTex == nil {
+			chunk.GenerateTexture()
+		}
 		err := engine.Renderer.Copy(chunk.TilesTex, nil, dst)
 		if err != nil {
 			panic(err)
