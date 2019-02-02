@@ -1,6 +1,7 @@
 package entities
 
 import (
+	"github.com/ojrac/opensimplex-go"
 	"github.com/revfyawo/gogame/components"
 	"github.com/revfyawo/gogame/ecs"
 	"github.com/revfyawo/gogame/engine"
@@ -22,8 +23,8 @@ func NewChunk(space components.Space) *Chunk {
 }
 
 // Generates a chunk heigh, rain and temp
-func (c *Chunk) Generate(seedHeight, seedTemp, seedRain int64) {
-	c.Chunk.Generate(seedHeight, seedTemp, seedRain, c.Rect.X, c.Rect.Y)
+func (c *Chunk) Generate(height, temp, rain opensimplex.Noise) {
+	c.Chunk.Generate(height, temp, rain, c.Rect.X, c.Rect.Y)
 }
 
 // Generates the chunk texture

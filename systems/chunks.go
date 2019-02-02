@@ -1,6 +1,7 @@
 package systems
 
 import (
+	"github.com/ojrac/opensimplex-go"
 	"github.com/revfyawo/gogame/components"
 	"github.com/revfyawo/gogame/ecs"
 	"github.com/revfyawo/gogame/engine"
@@ -14,13 +15,14 @@ import (
 const parallelGen = 8
 
 type Chunks struct {
-	chunks     map[sdl.Point]*entities.Chunk
-	seedHeight int64
-	seedTemp   int64
-	seedRain   int64
-	toGenerate []sdl.Point
-	workChan   chan *entities.Chunk
-	chunkChan  chan *entities.Chunk
+	mapSeed     int64
+	chunks      map[sdl.Point]*entities.Chunk
+	noiseHeight opensimplex.Noise
+	noiseTemp   opensimplex.Noise
+	noiseRain   opensimplex.Noise
+	toGenerate  []sdl.Point
+	workChan    chan *entities.Chunk
+	chunkChan   chan *entities.Chunk
 }
 
 func (c *Chunks) New(world *ecs.World) {
@@ -28,10 +30,11 @@ func (c *Chunks) New(world *ecs.World) {
 	c.workChan = make(chan *entities.Chunk, parallelGen)
 	c.chunkChan = make(chan *entities.Chunk, parallelGen)
 
-	rand.Seed(time.Now().UnixNano())
-	c.seedHeight = rand.Int63()
-	c.seedTemp = rand.Int63()
-	c.seedRain = rand.Int63()
+	c.mapSeed = time.Now().UnixNano()
+	rand.Seed(c.mapSeed)
+	c.noiseHeight = opensimplex.New(rand.Int63())
+	c.noiseTemp = opensimplex.New(rand.Int63())
+	c.noiseRain = opensimplex.New(rand.Int63())
 
 	for x := -20; x <= 20; x++ {
 		for y := -20; y <= 20; y++ {
@@ -45,9 +48,11 @@ func (c *Chunks) New(world *ecs.World) {
 
 func (c *Chunks) Update(d time.Duration) {
 	if engine.Input.JustPressed(sdl.SCANCODE_F5) {
-		c.seedHeight = rand.Int63()
-		c.seedTemp = rand.Int63()
-		c.seedRain = rand.Int63()
+		c.mapSeed = time.Now().UnixNano()
+		rand.Seed(c.mapSeed)
+		c.noiseHeight = opensimplex.New(rand.Int63())
+		c.noiseTemp = opensimplex.New(rand.Int63())
+		c.noiseRain = opensimplex.New(rand.Int63())
 		c.toGenerate = nil
 		for point := range c.chunks {
 			c.toGenerate = append(c.toGenerate, point)
@@ -72,6 +77,6 @@ func (*Chunks) RemoveEntity(e *ecs.BasicEntity) {}
 
 func (c *Chunks) generateChunk() {
 	chunk := <-c.workChan
-	chunk.Generate(c.seedHeight, c.seedRain, c.seedTemp)
+	chunk.Generate(c.noiseHeight, c.noiseRain, c.noiseTemp)
 	c.chunkChan <- chunk
 }

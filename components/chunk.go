@@ -20,11 +20,7 @@ type Chunk struct {
 	Biomes [][]Biome
 }
 
-func (c *Chunk) Generate(seedHeight, seedTemp, seedRain int64, x, y int32) {
-	heightNoise := opensimplex.New(seedHeight)
-	tempNoise := opensimplex.New(seedTemp)
-	rainNoise := opensimplex.New(seedRain)
-
+func (c *Chunk) Generate(heightNoise, tempNoise, rainNoise opensimplex.Noise, x, y int32) {
 	c.Height = make([][]float64, ChunkTile)
 	c.Rain = make([][]Rain, ChunkTile)
 	c.Temp = make([][]Temperature, ChunkTile)
