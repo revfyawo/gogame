@@ -6,19 +6,13 @@ import (
 	"github.com/revfyawo/gogame/engine"
 	"github.com/revfyawo/gogame/entities"
 	"github.com/veandco/go-sdl2/sdl"
-	"math"
 	"time"
 )
-
-type ChunkInfo struct {
-	Chunk     *entities.Chunk
-	ScreenPos *sdl.Rect
-}
 
 type ChunkRender struct {
 	chunks      map[sdl.Point]*entities.Chunk
 	visible     sdl.Rect
-	visibleInfo []ChunkInfo
+	screenPos   map[sdl.Point]sdl.Point
 	lastVisible sdl.Rect
 	messages    chan ecs.Message
 	camera      *Camera
@@ -63,20 +57,19 @@ func (c *ChunkRender) Update(d time.Duration) {
 		}
 	}
 
-	c.getVisibleChunks()
+	c.visible, c.screenPos = c.camera.GetVisibleChunks()
 	if c.lastVisible != c.visible {
 		c.freeHiddenChunks()
 	}
 	c.lastVisible = c.visible
+	scaledCS := int32(components.ChunkSize * c.camera.Scale)
 
-	for _, info := range c.visibleInfo {
-		chunk := info.Chunk
+	for point, pos := range c.screenPos {
+		chunk := c.chunks[point]
 		if chunk == nil {
 			continue
 		}
-		rect := info.ScreenPos
-		scaleCS := int32(components.ChunkSize * c.camera.Scale)
-		dst := &sdl.Rect{rect.X, rect.Y, scaleCS, scaleCS}
+		dst := &sdl.Rect{pos.X, pos.Y, scaledCS, scaledCS}
 		if chunk.TilesTex == nil {
 			chunk.GenerateTexture()
 		}
@@ -88,54 +81,6 @@ func (c *ChunkRender) Update(d time.Duration) {
 }
 
 func (*ChunkRender) RemoveEntity(e *ecs.BasicEntity) {}
-
-func (c *ChunkRender) getVisibleChunks() {
-	w, h, err := engine.Renderer.GetOutputSize()
-	if err != nil {
-		panic(err)
-	}
-
-	camPos := c.camera.ChunkPos
-	scale := c.camera.Scale
-	scaledCS := int32(components.ChunkSize * scale)
-	// Screen position of the chunk the camera is in
-	camChunkScreen := sdl.Point{w/2 - int32(float64(camPos.Position.X)*scale), h/2 - int32(float64(camPos.Position.Y)*scale)}
-
-	// Compute how many chunks left, right, up and down the camera chunk
-	var left, right, up, down int32
-	if camChunkScreen.X >= 0 {
-		left = int32(math.Ceil(float64(camChunkScreen.X) / float64(scaledCS)))
-	}
-	if camChunkScreen.X+int32(scaledCS) <= w {
-		right = int32(math.Ceil(float64(w-camChunkScreen.X-scaledCS) / float64(scaledCS)))
-	}
-	if camChunkScreen.Y >= 0 {
-		up = int32(math.Ceil(float64(camChunkScreen.Y) / float64(scaledCS)))
-	}
-	if camChunkScreen.Y+int32(scaledCS) <= h {
-		down = int32(math.Ceil(float64(h-camChunkScreen.Y-scaledCS) / float64(scaledCS)))
-	}
-	c.visible = sdl.Rect{camPos.Chunk.X - left, camPos.Chunk.Y - up, left + right + 1, up + down + 1}
-
-	// Fill visible chunk info
-	c.visibleInfo = c.visibleInfo[:0]
-	for x := camPos.Chunk.X - left; x <= camPos.Chunk.X+right; x++ {
-		for y := camPos.Chunk.Y - up; y <= camPos.Chunk.Y+down; y++ {
-			screenPos := &sdl.Rect{
-				camChunkScreen.X + scaledCS*(x-camPos.Chunk.X),
-				camChunkScreen.Y + scaledCS*(y-camPos.Chunk.Y),
-				scaledCS,
-				scaledCS,
-			}
-			chunkInfo := ChunkInfo{
-				Chunk:     c.chunks[sdl.Point{x, y}],
-				ScreenPos: screenPos,
-			}
-			c.visibleInfo = append(c.visibleInfo, chunkInfo)
-		}
-	}
-
-}
 
 func (c *ChunkRender) freeHiddenChunks() {
 	diff := sdl.Rect{
