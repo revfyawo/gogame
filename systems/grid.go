@@ -1,7 +1,6 @@
 package systems
 
 import (
-	"fmt"
 	"github.com/revfyawo/gogame/components"
 	"github.com/revfyawo/gogame/ecs"
 	"github.com/revfyawo/gogame/engine"
@@ -31,7 +30,6 @@ func (g *Grid) New(world *ecs.World) {
 
 func (g *Grid) Update(time.Duration) {
 	if engine.Input.JustPressed(sdl.SCANCODE_F1) {
-		fmt.Println("F1")
 		g.show = !g.show
 	}
 	if g.show {
