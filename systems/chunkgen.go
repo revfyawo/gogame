@@ -14,7 +14,7 @@ import (
 
 const parallelGen = 8
 
-type Chunks struct {
+type ChunkGen struct {
 	mapSeed     int64
 	chunks      map[sdl.Point]*entities.Chunk
 	noiseHeight opensimplex.Noise
@@ -25,7 +25,7 @@ type Chunks struct {
 	chunkChan   chan *entities.Chunk
 }
 
-func (c *Chunks) New(world *ecs.World) {
+func (c *ChunkGen) New(world *ecs.World) {
 	c.chunks = make(map[sdl.Point]*entities.Chunk)
 	c.workChan = make(chan *entities.Chunk, parallelGen)
 	c.chunkChan = make(chan *entities.Chunk, parallelGen)
@@ -46,7 +46,7 @@ func (c *Chunks) New(world *ecs.World) {
 	engine.Input.Register(sdl.SCANCODE_F5)
 }
 
-func (c *Chunks) Update(d time.Duration) {
+func (c *ChunkGen) Update(d time.Duration) {
 	if engine.Input.JustPressed(sdl.SCANCODE_F5) {
 		c.mapSeed = time.Now().UnixNano()
 		rand.Seed(c.mapSeed)
@@ -73,9 +73,9 @@ func (c *Chunks) Update(d time.Duration) {
 	}
 }
 
-func (*Chunks) RemoveEntity(e *ecs.BasicEntity) {}
+func (*ChunkGen) RemoveEntity(e *ecs.BasicEntity) {}
 
-func (c *Chunks) generateChunk() {
+func (c *ChunkGen) generateChunk() {
 	chunk := <-c.workChan
 	chunk.Generate(c.noiseHeight, c.noiseRain, c.noiseTemp)
 	c.chunkChan <- chunk
