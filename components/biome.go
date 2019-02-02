@@ -48,7 +48,7 @@ var BiomeColors = []uint32{
 	0xffe1a95f, // Cold desert: Earth yellow
 	0xff99ffff, // Frost desert: Ice blue
 	0xfffffafa, // Tundra: Snow white
-	0xff87ceeb, // Shallow water: Sky blue
+	0xff00ccff, // Shallow water: Vivid sky blue
 	0xff4000ff, // Deep water: Ultramarine
 }
 
