@@ -62,7 +62,7 @@ func (c *ChunkRender) Update(d time.Duration) {
 		c.freeHiddenChunks()
 	}
 	c.lastVisible = c.visible
-	scaledCS := int32(components.ChunkSize * c.camera.Scale)
+	scaledCS := int32(components.ChunkSize * c.camera.Scale())
 
 	for point, pos := range c.screenPos {
 		chunk := c.chunks[point]

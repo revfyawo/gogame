@@ -32,9 +32,9 @@ func (cz *CameraZoom) Update(time.Duration) {
 	wheel := engine.Input.Wheel()
 	switch wheel {
 	case 1:
-		cz.camera.Scale *= 1 + zoomSpeed
+		engine.Message.Dispatch(&ChangeScaleMessage{cz.camera.Scale() * (1 + zoomSpeed)})
 	case -1:
-		cz.camera.Scale *= 1 - zoomSpeed
+		engine.Message.Dispatch(&ChangeScaleMessage{cz.camera.Scale() * (1 - zoomSpeed)})
 	}
 }
 

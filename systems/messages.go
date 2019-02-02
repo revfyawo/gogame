@@ -7,6 +7,7 @@ import (
 
 const (
 	NewChunkMessageType = iota
+	ChangeScaleMessageType
 )
 
 type NewChunkMessage struct {
@@ -15,4 +16,12 @@ type NewChunkMessage struct {
 
 func (*NewChunkMessage) Type() ecs.MessageType {
 	return NewChunkMessageType
+}
+
+type ChangeScaleMessage struct {
+	Scale float64
+}
+
+func (*ChangeScaleMessage) Type() ecs.MessageType {
+	return ChangeScaleMessageType
 }

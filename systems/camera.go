@@ -12,8 +12,11 @@ import (
 const speed = 5
 
 type Camera struct {
-	ChunkPos *components.ChunkPosition
-	Scale    float64
+	ChunkPos  *components.ChunkPosition
+	messages  chan ecs.Message
+	scale     float64
+	visible   sdl.Rect
+	screenPos map[sdl.Point]sdl.Point
 }
 
 func (c *Camera) New(world *ecs.World) {
@@ -22,10 +25,25 @@ func (c *Camera) New(world *ecs.World) {
 	engine.Input.Register(sdl.SCANCODE_S)
 	engine.Input.Register(sdl.SCANCODE_D)
 	c.ChunkPos = new(components.ChunkPosition)
-	c.Scale = 1
+	c.scale = 1
+	c.messages = make(chan ecs.Message, 10)
+	engine.Message.Listen(ChangeScaleMessageType, c.messages)
 }
 
 func (c *Camera) Update(d time.Duration) {
+	pending := true
+	for pending {
+		select {
+		case message := <-c.messages:
+			switch m := message.(type) {
+			case *ChangeScaleMessage:
+				c.scale = m.Scale
+			}
+		default:
+			pending = false
+		}
+	}
+
 	if engine.Input.Pressed(sdl.SCANCODE_W) {
 		c.ChunkPos.MoveY(-speed)
 	}
@@ -38,18 +56,28 @@ func (c *Camera) Update(d time.Duration) {
 	if engine.Input.Pressed(sdl.SCANCODE_D) {
 		c.ChunkPos.MoveX(speed)
 	}
+
+	c.getVisibleChunks()
 }
 
 func (*Camera) RemoveEntity(e *ecs.BasicEntity) {}
 
+func (c *Camera) Scale() float64 {
+	return c.scale
+}
+
 func (c *Camera) GetVisibleChunks() (sdl.Rect, map[sdl.Point]sdl.Point) {
+	return c.visible, c.screenPos
+}
+
+func (c *Camera) getVisibleChunks() {
 	w, h, err := engine.Renderer.GetOutputSize()
 	if err != nil {
 		panic(err)
 	}
 
 	camPos := c.ChunkPos
-	scale := c.Scale
+	scale := c.scale
 	scaledCS := int32(components.ChunkSize * scale)
 	// Screen position of the chunk the camera is in
 	camChunkScreen := sdl.Point{w/2 - int32(float64(camPos.Position.X)*scale), h/2 - int32(float64(camPos.Position.Y)*scale)}
@@ -68,18 +96,16 @@ func (c *Camera) GetVisibleChunks() (sdl.Rect, map[sdl.Point]sdl.Point) {
 	if camChunkScreen.Y+int32(scaledCS) <= h {
 		down = int32(math.Ceil(float64(h-camChunkScreen.Y-scaledCS) / float64(scaledCS)))
 	}
-	visible := sdl.Rect{camPos.Chunk.X - left, camPos.Chunk.Y - up, left + right + 1, up + down + 1}
+	c.visible = sdl.Rect{camPos.Chunk.X - left, camPos.Chunk.Y - up, left + right + 1, up + down + 1}
 
 	// Fill visible chunk info
-	screenPosition := make(map[sdl.Point]sdl.Point)
+	c.screenPos = make(map[sdl.Point]sdl.Point)
 	for x := camPos.Chunk.X - left; x <= camPos.Chunk.X+right; x++ {
 		for y := camPos.Chunk.Y - up; y <= camPos.Chunk.Y+down; y++ {
-			screenPosition[sdl.Point{x, y}] = sdl.Point{
+			c.screenPos[sdl.Point{x, y}] = sdl.Point{
 				camChunkScreen.X + scaledCS*(x-camPos.Chunk.X),
 				camChunkScreen.Y + scaledCS*(y-camPos.Chunk.Y),
 			}
 		}
 	}
-
-	return visible, screenPosition
 }
