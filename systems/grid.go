@@ -12,7 +12,8 @@ import (
 type Grid struct {
 	camera *Camera
 	show   bool
-	lock   sync.RWMutex
+	// Need to lock for `show` field because it is written un Update & read in UpdateFrame
+	lock sync.RWMutex
 }
 
 func (g *Grid) New(world *ecs.World) {
