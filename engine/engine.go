@@ -121,16 +121,20 @@ func runFrameLoop() {
 		<-ticker.C
 		counter++
 		// Wait for update, so frame rate can't be higher than update rate
-		<-updateDone
-
 		// Empty channel, if frame rate lower than update rate
+		done := false
 		pending := true
 		for pending {
 			select {
+			case <-quit:
+				return
 			case <-updateDone:
+				done = true
 				continue
 			default:
-				pending = false
+				if done {
+					pending = false
+				}
 			}
 		}
 
@@ -141,12 +145,6 @@ func runFrameLoop() {
 		}
 		delta = now.Sub(lastFrame)
 		lastFrame = now
-
-		select {
-		case <-quit:
-			return
-		default:
-		}
 
 		err = Renderer.Clear()
 		if err != nil {
