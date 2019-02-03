@@ -17,7 +17,7 @@ func (s *defaultScene) Setup(w *ecs.World) {
 	w.AddSystem(&systems.MouseChunk{})
 	w.AddSystem(&systems.MouseZoom{})
 	w.AddRenderSystem(&systems.ChunkRender{})
-	w.AddSystem(&systems.Grid{})
+	w.AddRenderSystem(&systems.Grid{})
 	w.AddSystem(&systems.ChunkGen{})
 }
 

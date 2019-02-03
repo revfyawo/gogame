@@ -28,7 +28,7 @@ func (g *Grid) New(world *ecs.World) {
 	engine.Input.Register(sdl.SCANCODE_F1)
 }
 
-func (g *Grid) Update(time.Duration) {
+func (g *Grid) UpdateFrame(time.Duration) {
 	if engine.Input.JustPressed(sdl.SCANCODE_F1) {
 		g.show = !g.show
 	}
@@ -38,8 +38,10 @@ func (g *Grid) Update(time.Duration) {
 			panic(err)
 		}
 
+		g.camera.RLock()
 		camPos := g.camera.Position()
 		scale := g.camera.Scale()
+		g.camera.RUnlock()
 		scaledCS := int32(components.ChunkSize * scale)
 		var lineWidth int32
 		if scaledCS <= 64 {
