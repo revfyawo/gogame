@@ -44,7 +44,7 @@ func (mz *MouseZoom) Update(time.Duration) {
 	default:
 		return
 	}
-	engine.Message.Dispatch(&ChangeScaleMessage{newScale})
+	engine.Message.Dispatch(ChangeScaleMessage{newScale})
 
 	mousePos := engine.Input.MousePosition()
 	w, h, err := engine.Renderer.GetOutputSize()
@@ -55,7 +55,7 @@ func (mz *MouseZoom) Update(time.Duration) {
 	newCamPos := mz.mouseChunk.chunkPos
 	newCamPos.MoveX(int32(float64(diff.X) / newScale))
 	newCamPos.MoveY(int32(float64(diff.Y) / newScale))
-	engine.Message.Dispatch(&SetCameraPositionMessage{newCamPos})
+	engine.Message.Dispatch(SetCameraPositionMessage{newCamPos})
 }
 
 func (*MouseZoom) RemoveEntity(*ecs.BasicEntity) {}

@@ -42,7 +42,7 @@ func (c *ChunkRender) Update(d time.Duration) {
 		select {
 		case message := <-c.messages:
 			switch m := message.(type) {
-			case *NewChunkMessage:
+			case NewChunkMessage:
 				c.chunks[sdl.Point{m.Chunk.Rect.X, m.Chunk.Rect.Y}] = m.Chunk
 				if m.Chunk.TilesTex != nil {
 					err := m.Chunk.TilesTex.Destroy()

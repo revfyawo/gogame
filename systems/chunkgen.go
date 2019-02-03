@@ -68,7 +68,7 @@ func (c *ChunkGen) Update(d time.Duration) {
 		c.toGenerate = c.toGenerate[max:]
 		for i := 0; i < max; i++ {
 			chunk := <-c.chunkChan
-			engine.Message.Dispatch(&NewChunkMessage{chunk})
+			engine.Message.Dispatch(NewChunkMessage{chunk})
 		}
 	}
 }

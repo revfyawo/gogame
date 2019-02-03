@@ -16,7 +16,7 @@ type NewChunkMessage struct {
 	Chunk *entities.Chunk
 }
 
-func (*NewChunkMessage) Type() ecs.MessageType {
+func (NewChunkMessage) Type() ecs.MessageType {
 	return NewChunkMessageType
 }
 
@@ -24,7 +24,7 @@ type ChangeScaleMessage struct {
 	Scale float64
 }
 
-func (*ChangeScaleMessage) Type() ecs.MessageType {
+func (ChangeScaleMessage) Type() ecs.MessageType {
 	return ChangeScaleMessageType
 }
 
@@ -32,6 +32,6 @@ type SetCameraPositionMessage struct {
 	Position components.ChunkPosition
 }
 
-func (*SetCameraPositionMessage) Type() ecs.MessageType {
+func (SetCameraPositionMessage) Type() ecs.MessageType {
 	return SetCameraPositionMessageType
 }

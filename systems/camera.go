@@ -36,9 +36,9 @@ func (c *Camera) Update(d time.Duration) {
 		select {
 		case message := <-c.messages:
 			switch m := message.(type) {
-			case *ChangeScaleMessage:
+			case ChangeScaleMessage:
 				c.scale = m.Scale
-			case *SetCameraPositionMessage:
+			case SetCameraPositionMessage:
 				c.position = m.Position
 			}
 		default:
