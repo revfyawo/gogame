@@ -36,7 +36,7 @@ func (c *ChunkRender) New(world *ecs.World) {
 	}
 }
 
-func (c *ChunkRender) Update(d time.Duration) {
+func (c *ChunkRender) UpdateFrame(d time.Duration) {
 	pending := true
 	for pending {
 		select {
@@ -57,12 +57,14 @@ func (c *ChunkRender) Update(d time.Duration) {
 		}
 	}
 
+	c.camera.RLock()
 	c.visible, c.screenPos = c.camera.GetVisibleChunks()
 	if c.lastVisible != c.visible {
 		c.freeHiddenChunks()
 	}
 	c.lastVisible = c.visible
 	scaledCS := int32(components.ChunkSize * c.camera.Scale())
+	c.camera.RUnlock()
 
 	for point, pos := range c.screenPos {
 		chunk := c.chunks[point]
