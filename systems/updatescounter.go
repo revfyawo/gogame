@@ -11,11 +11,14 @@ import (
 )
 
 type UpdatesCounter struct {
-	font    *ttf.Font
-	texture *sdl.Texture
-	lock    sync.Mutex
-	update  time.Duration
-	frame   time.Duration
+	font        *ttf.Font
+	texture     *sdl.Texture
+	lock        sync.Mutex
+	updateRate  int
+	frameRate   int
+	updateCount int
+	frameCount  int
+	lastSecond  time.Time
 }
 
 func (uc *UpdatesCounter) New(*ecs.World) {
@@ -27,25 +30,21 @@ func (uc *UpdatesCounter) New(*ecs.World) {
 }
 
 func (uc *UpdatesCounter) UpdateFrame() {
+	now := time.Now()
 	uc.lock.Lock()
-	update := uc.update
-	uc.frame = engine.FrameDelta
+	uc.frameCount++
+	if now.Sub(uc.lastSecond) > time.Second {
+		uc.lastSecond = now
+		uc.updateRate = uc.updateCount
+		uc.frameRate = uc.frameCount
+		uc.updateCount = 0
+		uc.frameCount = 0
+	}
+	update := uc.updateRate
+	frame := uc.frameRate
 	uc.lock.Unlock()
 
-	var updates, frames float64
-	switch update {
-	case 0:
-		updates = 60
-	default:
-		updates = float64(time.Second) / float64(update)
-	}
-	switch engine.FrameDelta {
-	case 0:
-		frames = 60
-	default:
-		frames = float64(time.Second) / float64(engine.FrameDelta)
-	}
-	text := fmt.Sprintf("%.1f FPS / %.1f UPS", frames, updates)
+	text := fmt.Sprintf("%v FPS / %v UPS", frame, update)
 	surface, err := uc.font.RenderUTF8Blended(text, sdl.Color{0xff, 0xff, 0xff, 0xff})
 	if err != nil {
 		panic(err)
@@ -74,7 +73,7 @@ func (uc *UpdatesCounter) UpdateFrame() {
 
 func (uc *UpdatesCounter) Update() {
 	uc.lock.Lock()
-	uc.update = engine.UpdateDelta
+	uc.updateCount++
 	uc.lock.Unlock()
 }
 
