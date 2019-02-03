@@ -3,6 +3,7 @@ package engine
 import (
 	"github.com/revfyawo/gogame/ecs"
 	"testing"
+	"time"
 )
 
 type MessageTest struct{}
@@ -21,6 +22,8 @@ func TestMessageManager(t *testing.T) {
 	sys := &MessageSystemTest{make(chan ecs.Message, 1)}
 
 	mm.Dispatch(mess)
+	c := time.After(100 * time.Millisecond)
+	<-c
 	select {
 	case <-sys.ch:
 		t.Error("sys received a message without listening")
@@ -33,6 +36,8 @@ func TestMessageManager(t *testing.T) {
 	}
 
 	mm.Dispatch(mess)
+	c = time.After(100 * time.Millisecond)
+	<-c
 	select {
 	case <-sys.ch:
 		break
