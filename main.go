@@ -14,7 +14,8 @@ type defaultScene struct{}
 
 func (s *defaultScene) Setup(w *ecs.World) {
 	w.AddSystem(&systems.Camera{})
-	w.AddSystem(&systems.CameraZoom{})
+	w.AddSystem(&systems.MouseChunk{})
+	w.AddSystem(&systems.MouseZoom{})
 	w.AddSystem(&systems.ChunkRender{})
 	w.AddSystem(&systems.Grid{})
 	w.AddSystem(&systems.ChunkGen{})
