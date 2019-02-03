@@ -12,7 +12,7 @@ import (
 const speed = 5
 
 type Camera struct {
-	ChunkPos  *components.ChunkPosition
+	ChunkPos  components.ChunkPosition
 	messages  chan ecs.Message
 	scale     float64
 	visible   sdl.Rect
@@ -24,7 +24,6 @@ func (c *Camera) New(world *ecs.World) {
 	engine.Input.Register(sdl.SCANCODE_A)
 	engine.Input.Register(sdl.SCANCODE_S)
 	engine.Input.Register(sdl.SCANCODE_D)
-	c.ChunkPos = new(components.ChunkPosition)
 	c.scale = 1
 	c.messages = make(chan ecs.Message, 10)
 	engine.Message.Listen(ChangeScaleMessageType, c.messages)
