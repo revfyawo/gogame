@@ -104,7 +104,7 @@ func (im *InputManager) Clicked(button uint8) bool {
 	return im.mouse.pressed[button-1] == sdl.PRESSED
 }
 
-func (im *InputManager) MousePosition(button uint8) sdl.Point {
+func (im *InputManager) MousePosition() sdl.Point {
 	return sdl.Point{X: im.mouse.x, Y: im.mouse.y}
 }
 
