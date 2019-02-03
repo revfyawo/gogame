@@ -24,7 +24,7 @@ func (c *ChunkRender) New(world *ecs.World) {
 	engine.Message.Listen(NewChunkMessageType, c.messages)
 
 	camera := false
-	for _, sys := range world.Systems() {
+	for _, sys := range world.UpdateSystems() {
 		switch s := sys.(type) {
 		case *Camera:
 			camera = true

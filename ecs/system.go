@@ -3,6 +3,10 @@ package ecs
 import "time"
 
 type System interface {
+	RemoveEntity(*BasicEntity)
+}
+
+type UpdateSystem interface {
 	Update(time.Duration)
 	RemoveEntity(*BasicEntity)
 }

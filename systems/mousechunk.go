@@ -17,7 +17,7 @@ type MouseChunk struct {
 
 func (mc *MouseChunk) New(world *ecs.World) {
 	camera := false
-	for _, sys := range world.Systems() {
+	for _, sys := range world.UpdateSystems() {
 		switch s := sys.(type) {
 		case *Camera:
 			mc.camera = s
