@@ -6,17 +6,27 @@ import (
 	"github.com/revfyawo/gogame/engine"
 	"github.com/veandco/go-sdl2/sdl"
 	"math"
+	"sync"
 	"time"
 )
 
 const speed = 5
 
 type Camera struct {
+	lock      sync.RWMutex
 	position  components.ChunkPosition
 	messages  chan ecs.Message
 	scale     float64
 	visible   sdl.Rect
 	screenPos map[sdl.Point]sdl.Point
+}
+
+func (c *Camera) RLock() {
+	c.lock.RLock()
+}
+
+func (c *Camera) RUnlock() {
+	c.lock.RUnlock()
 }
 
 func (c *Camera) New(world *ecs.World) {
@@ -31,6 +41,8 @@ func (c *Camera) New(world *ecs.World) {
 }
 
 func (c *Camera) Update(d time.Duration) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
 	pending := true
 	for pending {
 		select {
@@ -73,7 +85,11 @@ func (c *Camera) Scale() float64 {
 }
 
 func (c *Camera) GetVisibleChunks() (sdl.Rect, map[sdl.Point]sdl.Point) {
-	return c.visible, c.screenPos
+	screenPos := make(map[sdl.Point]sdl.Point)
+	for key, value := range c.screenPos {
+		screenPos[key] = value
+	}
+	return c.visible, screenPos
 }
 
 func (c *Camera) getVisibleChunks() {
@@ -102,9 +118,9 @@ func (c *Camera) getVisibleChunks() {
 	if camChunkScreen.Y+int32(scaledCS) <= h {
 		down = int32(math.Ceil(float64(h-camChunkScreen.Y-scaledCS) / float64(scaledCS)))
 	}
-	c.visible = sdl.Rect{camPos.Chunk.X - left, camPos.Chunk.Y - up, left + right + 1, up + down + 1}
 
 	// Fill visible chunk info
+	c.visible = sdl.Rect{camPos.Chunk.X - left, camPos.Chunk.Y - up, left + right + 1, up + down + 1}
 	c.screenPos = make(map[sdl.Point]sdl.Point)
 	for x := camPos.Chunk.X - left; x <= camPos.Chunk.X+right; x++ {
 		for y := camPos.Chunk.Y - up; y <= camPos.Chunk.Y+down; y++ {
