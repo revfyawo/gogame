@@ -22,7 +22,7 @@ func (c *Chunk) Generate(heightNoise, tempNoise, rainNoise Noise, x, y int32) {
 	c.Temp = make([][]Temperature, ChunkTile)
 	c.Biomes = make([][]Biome, ChunkTile)
 
-	var noise, noise0, noise1, noise2, noise3, noise4 float64
+	var noise float64
 	var rain Rain
 	var temp Temperature
 	for i := 0; i < ChunkTile; i++ {
@@ -34,12 +34,7 @@ func (c *Chunk) Generate(heightNoise, tempNoise, rainNoise Noise, x, y int32) {
 			xn := float64(x*ChunkTile + int32(i))
 			yn := float64(y*ChunkTile + int32(j))
 
-			noise0 = heightNoise.Eval(xn, yn, HeightNoiseStep) * 16
-			noise1 = heightNoise.Eval(xn, yn, 2*HeightNoiseStep) * 8
-			noise2 = heightNoise.Eval(xn, yn, 4*HeightNoiseStep) * 4
-			noise3 = heightNoise.Eval(xn, yn, 8*HeightNoiseStep) * 2
-			noise4 = heightNoise.Eval(xn, yn, 16*HeightNoiseStep)
-			noise = (noise0 + noise1 + noise2 + noise3 + noise4) / 16
+			noise = heightNoise.EvalOctaves(xn, yn, HeightNoiseStep, 5)
 			c.Height[i][j] = noise
 			water := false
 			if noise < WaterLevel {
@@ -50,12 +45,7 @@ func (c *Chunk) Generate(heightNoise, tempNoise, rainNoise Noise, x, y int32) {
 				c.Biomes[i][j] = ShallowWater
 			}
 
-			noise0 = rainNoise.Eval(xn, yn, RainNoiseStep) * 16
-			noise1 = rainNoise.Eval(xn, yn, 2*RainNoiseStep) * 8
-			noise2 = rainNoise.Eval(xn, yn, 4*RainNoiseStep) * 4
-			noise3 = rainNoise.Eval(xn, yn, 8*RainNoiseStep) * 2
-			noise4 = rainNoise.Eval(xn, yn, 16*RainNoiseStep)
-			noise = (noise0 + noise1 + noise2 + noise3 + noise4) / 16
+			noise = rainNoise.EvalOctaves(xn, yn, RainNoiseStep, 5)
 			if noise < -0.6 {
 				rain = Aridest
 			} else if noise < -0.2 {
@@ -69,12 +59,7 @@ func (c *Chunk) Generate(heightNoise, tempNoise, rainNoise Noise, x, y int32) {
 			}
 			c.Rain[i][j] = rain
 
-			noise0 = tempNoise.Eval(xn, yn, TempNoiseStep) * 16
-			noise1 = tempNoise.Eval(xn, yn, 2*TempNoiseStep) * 8
-			noise2 = tempNoise.Eval(xn, yn, 4*TempNoiseStep) * 4
-			noise3 = tempNoise.Eval(xn, yn, 8*TempNoiseStep) * 2
-			noise4 = tempNoise.Eval(xn, yn, 16*TempNoiseStep)
-			noise = (noise0 + noise1 + noise2 + noise3 + noise4) / 16
+			noise = tempNoise.EvalOctaves(xn, yn, TempNoiseStep, 5)
 			if noise < -0.6 {
 				temp = Coldest
 			} else if noise < -0.2 {
