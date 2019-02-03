@@ -19,6 +19,7 @@ type UpdatesCounter struct {
 	updateCount int
 	frameCount  int
 	lastSecond  time.Time
+	enabled     bool
 }
 
 func (uc *UpdatesCounter) New(*ecs.World) {
@@ -27,9 +28,13 @@ func (uc *UpdatesCounter) New(*ecs.World) {
 		panic(err)
 	}
 	uc.font = font
+	engine.Input.Register(sdl.SCANCODE_F2)
 }
 
 func (uc *UpdatesCounter) UpdateFrame() {
+	if !uc.enabled {
+		return
+	}
 	now := time.Now()
 	uc.lock.Lock()
 	uc.frameCount++
@@ -73,8 +78,14 @@ func (uc *UpdatesCounter) UpdateFrame() {
 
 func (uc *UpdatesCounter) Update() {
 	uc.lock.Lock()
+	defer uc.lock.Unlock()
+	if engine.Input.JustPressed(sdl.SCANCODE_F2) {
+		uc.enabled = !uc.enabled
+	}
+	if !uc.enabled {
+		return
+	}
 	uc.updateCount++
-	uc.lock.Unlock()
 }
 
 func (*UpdatesCounter) RemoveEntity(*ecs.BasicEntity) {}
