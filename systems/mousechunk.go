@@ -33,7 +33,7 @@ func (mc *MouseChunk) Update(time.Duration) {
 	mc.position = engine.Input.MousePosition()
 	if mc.position != mc.lastPos {
 		mc.lastPos = mc.position
-		camChunkPos := mc.camera.ChunkPos
+		camChunkPos := mc.camera.Position()
 		scale := mc.camera.Scale()
 		w, h, err := engine.Renderer.GetOutputSize()
 		if err != nil {

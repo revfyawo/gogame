@@ -12,7 +12,7 @@ import (
 const speed = 5
 
 type Camera struct {
-	ChunkPos  components.ChunkPosition
+	position  components.ChunkPosition
 	messages  chan ecs.Message
 	scale     float64
 	visible   sdl.Rect
@@ -27,6 +27,7 @@ func (c *Camera) New(world *ecs.World) {
 	c.scale = 1
 	c.messages = make(chan ecs.Message, 10)
 	engine.Message.Listen(ChangeScaleMessageType, c.messages)
+	engine.Message.Listen(SetCameraPositionMessageType, c.messages)
 }
 
 func (c *Camera) Update(d time.Duration) {
@@ -37,6 +38,8 @@ func (c *Camera) Update(d time.Duration) {
 			switch m := message.(type) {
 			case *ChangeScaleMessage:
 				c.scale = m.Scale
+			case *SetCameraPositionMessage:
+				c.position = m.Position
 			}
 		default:
 			pending = false
@@ -44,22 +47,26 @@ func (c *Camera) Update(d time.Duration) {
 	}
 
 	if engine.Input.Pressed(sdl.SCANCODE_W) {
-		c.ChunkPos.MoveY(-speed)
+		c.position.MoveY(-speed)
 	}
 	if engine.Input.Pressed(sdl.SCANCODE_A) {
-		c.ChunkPos.MoveX(-speed)
+		c.position.MoveX(-speed)
 	}
 	if engine.Input.Pressed(sdl.SCANCODE_S) {
-		c.ChunkPos.MoveY(speed)
+		c.position.MoveY(speed)
 	}
 	if engine.Input.Pressed(sdl.SCANCODE_D) {
-		c.ChunkPos.MoveX(speed)
+		c.position.MoveX(speed)
 	}
 
 	c.getVisibleChunks()
 }
 
 func (*Camera) RemoveEntity(e *ecs.BasicEntity) {}
+
+func (c *Camera) Position() components.ChunkPosition {
+	return c.position
+}
 
 func (c *Camera) Scale() float64 {
 	return c.scale
@@ -75,7 +82,7 @@ func (c *Camera) getVisibleChunks() {
 		panic(err)
 	}
 
-	camPos := c.ChunkPos
+	camPos := c.position
 	scale := c.scale
 	scaledCS := int32(components.ChunkSize * scale)
 	// Screen position of the chunk the camera is in

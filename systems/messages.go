@@ -1,6 +1,7 @@
 package systems
 
 import (
+	"github.com/revfyawo/gogame/components"
 	"github.com/revfyawo/gogame/ecs"
 	"github.com/revfyawo/gogame/entities"
 )
@@ -8,6 +9,7 @@ import (
 const (
 	NewChunkMessageType = iota
 	ChangeScaleMessageType
+	SetCameraPositionMessageType
 )
 
 type NewChunkMessage struct {
@@ -24,4 +26,12 @@ type ChangeScaleMessage struct {
 
 func (*ChangeScaleMessage) Type() ecs.MessageType {
 	return ChangeScaleMessageType
+}
+
+type SetCameraPositionMessage struct {
+	Position components.ChunkPosition
+}
+
+func (*SetCameraPositionMessage) Type() ecs.MessageType {
+	return SetCameraPositionMessageType
 }

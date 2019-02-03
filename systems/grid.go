@@ -38,7 +38,7 @@ func (g *Grid) Update(time.Duration) {
 			panic(err)
 		}
 
-		camPos := g.camera.ChunkPos
+		camPos := g.camera.Position()
 		scale := g.camera.Scale()
 		scaledCS := int32(components.ChunkSize * scale)
 		var lineWidth int32
