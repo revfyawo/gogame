@@ -18,6 +18,7 @@ var (
 
 	currentScene ecs.Scene
 	currentWorld *ecs.World
+	quit         = make(chan bool, 1)
 )
 
 func Run(scene ecs.Scene) {
@@ -51,15 +52,20 @@ func Run(scene ecs.Scene) {
 	currentScene = scene
 	currentScene.Setup(currentWorld)
 
+	go runUpdateLoop()
+	runFrameLoop()
+}
+
+func runUpdateLoop() {
 	var counter int
-	var now, start, lastFrame, lastSecond time.Time
+	var now, start, lastUpdate, lastSecond time.Time
 	var delta time.Duration
 	start = time.Now()
-	lastFrame = start
+	lastUpdate = start
 	lastSecond = start
 	var ticker = time.NewTicker(time.Second / FPSLimit)
-	var running = true
-	for running {
+	defer ticker.Stop()
+	for {
 		<-ticker.C
 		counter++
 		now = time.Now()
@@ -67,16 +73,16 @@ func Run(scene ecs.Scene) {
 			lastSecond = now
 			counter = 0
 		}
-		delta = now.Sub(lastFrame)
-		lastFrame = now
+		delta = now.Sub(lastUpdate)
+		lastUpdate = now
 
 		// SDL uses same address for each event: need to copy value before passing it to input manager
 		// can't group cases, because copy wouldn't work because Event is an interface
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 			switch e := event.(type) {
 			case *sdl.QuitEvent:
-				running = false
-				break
+				quit <- true
+				return
 			case *sdl.KeyboardEvent:
 				newEvent := *e
 				Input.PushEvent(&newEvent)
@@ -93,14 +99,43 @@ func Run(scene ecs.Scene) {
 		}
 
 		Input.Update()
+		currentWorld.Update(delta)
+	}
+}
+
+func runFrameLoop() {
+	var err error
+	var counter int
+	var now, start, lastFrame, lastSecond time.Time
+	var delta time.Duration
+	start = time.Now()
+	lastFrame = start
+	lastSecond = start
+	var ticker = time.NewTicker(time.Second / FPSLimit)
+	defer ticker.Stop()
+	for {
+		<-ticker.C
+		counter++
+		now = time.Now()
+		if lastSecond.Add(time.Second).Before(time.Now()) {
+			lastSecond = now
+			counter = 0
+		}
+		delta = now.Sub(lastFrame)
+		lastFrame = now
+
+		select {
+		case <-quit:
+			return
+		default:
+		}
 
 		err = Renderer.Clear()
 		if err != nil {
 			panic(err)
 		}
 
-		currentWorld.Update(delta)
+		currentWorld.UpdateRender(delta)
 		Renderer.Present()
 	}
-	ticker.Stop()
 }

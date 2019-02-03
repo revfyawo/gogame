@@ -6,27 +6,16 @@ import (
 	"github.com/revfyawo/gogame/engine"
 	"github.com/revfyawo/gogame/entities"
 	"github.com/veandco/go-sdl2/sdl"
-	"math"
 	"time"
 )
-
-const black = 0xff000000
-
-var gridTexture *sdl.Texture
-
-type ChunkInfo struct {
-	Chunk     *entities.Chunk
-	ScreenPos *sdl.Rect
-}
 
 type ChunkRender struct {
 	chunks      map[sdl.Point]*entities.Chunk
 	visible     sdl.Rect
-	visibleInfo []ChunkInfo
+	screenPos   map[sdl.Point]sdl.Point
 	lastVisible sdl.Rect
 	messages    chan ecs.Message
 	camera      *Camera
-	grid        bool
 }
 
 func (c *ChunkRender) New(world *ecs.World) {
@@ -45,20 +34,15 @@ func (c *ChunkRender) New(world *ecs.World) {
 	if !camera {
 		panic("need to add camera system before render system")
 	}
-
-	if gridTexture == nil {
-		initGridTexture()
-	}
-	engine.Input.Register(sdl.SCANCODE_F1)
 }
 
-func (c *ChunkRender) Update(d time.Duration) {
+func (c *ChunkRender) UpdateFrame(d time.Duration) {
 	pending := true
 	for pending {
 		select {
 		case message := <-c.messages:
 			switch m := message.(type) {
-			case *NewChunkMessage:
+			case NewChunkMessage:
 				c.chunks[sdl.Point{m.Chunk.Rect.X, m.Chunk.Rect.Y}] = m.Chunk
 				if m.Chunk.TilesTex != nil {
 					err := m.Chunk.TilesTex.Destroy()
@@ -72,24 +56,22 @@ func (c *ChunkRender) Update(d time.Duration) {
 			pending = false
 		}
 	}
-	if engine.Input.JustPressed(sdl.SCANCODE_F1) {
-		c.grid = !c.grid
-	}
 
-	c.getVisibleChunks()
+	c.camera.RLock()
+	c.visible, c.screenPos = c.camera.GetVisibleChunks()
 	if c.lastVisible != c.visible {
 		c.freeHiddenChunks()
 	}
 	c.lastVisible = c.visible
+	scaledCS := int32(components.ChunkSize * c.camera.Scale())
+	c.camera.RUnlock()
 
-	for _, info := range c.visibleInfo {
-		chunk := info.Chunk
+	for point, pos := range c.screenPos {
+		chunk := c.chunks[point]
 		if chunk == nil {
 			continue
 		}
-		rect := info.ScreenPos
-		scaleCS := int32(components.ChunkSize * c.camera.Scale)
-		dst := &sdl.Rect{rect.X, rect.Y, scaleCS, scaleCS}
+		dst := &sdl.Rect{pos.X, pos.Y, scaledCS, scaledCS}
 		if chunk.TilesTex == nil {
 			chunk.GenerateTexture()
 		}
@@ -97,64 +79,10 @@ func (c *ChunkRender) Update(d time.Duration) {
 		if err != nil {
 			panic(err)
 		}
-		if c.grid {
-			err = engine.Renderer.Copy(gridTexture, nil, dst)
-			if err != nil {
-				panic(err)
-			}
-		}
 	}
 }
 
 func (*ChunkRender) RemoveEntity(e *ecs.BasicEntity) {}
-
-func (c *ChunkRender) getVisibleChunks() {
-	w, h, err := engine.Renderer.GetOutputSize()
-	if err != nil {
-		panic(err)
-	}
-
-	camPos := c.camera.ChunkPos
-	scale := c.camera.Scale
-	scaledCS := int32(components.ChunkSize * scale)
-	// Screen position of the chunk the camera is in
-	camChunkScreen := sdl.Point{w/2 - int32(float64(camPos.Position.X)*scale), h/2 - int32(float64(camPos.Position.Y)*scale)}
-
-	// Compute how many chunks left, right, up and down the camera chunk
-	var left, right, up, down int32
-	if camChunkScreen.X >= 0 {
-		left = int32(math.Ceil(float64(camChunkScreen.X) / float64(scaledCS)))
-	}
-	if camChunkScreen.X+int32(scaledCS) <= w {
-		right = int32(math.Ceil(float64(w-camChunkScreen.X-scaledCS) / float64(scaledCS)))
-	}
-	if camChunkScreen.Y >= 0 {
-		up = int32(math.Ceil(float64(camChunkScreen.Y) / float64(scaledCS)))
-	}
-	if camChunkScreen.Y+int32(scaledCS) <= h {
-		down = int32(math.Ceil(float64(h-camChunkScreen.Y-scaledCS) / float64(scaledCS)))
-	}
-	c.visible = sdl.Rect{camPos.Chunk.X - left, camPos.Chunk.Y - up, left + right + 1, up + down + 1}
-
-	// Fill visible chunk info
-	c.visibleInfo = c.visibleInfo[:0]
-	for x := camPos.Chunk.X - left; x <= camPos.Chunk.X+right; x++ {
-		for y := camPos.Chunk.Y - up; y <= camPos.Chunk.Y+down; y++ {
-			screenPos := &sdl.Rect{
-				camChunkScreen.X + scaledCS*(x-camPos.Chunk.X),
-				camChunkScreen.Y + scaledCS*(y-camPos.Chunk.Y),
-				scaledCS,
-				scaledCS,
-			}
-			chunkInfo := ChunkInfo{
-				Chunk:     c.chunks[sdl.Point{x, y}],
-				ScreenPos: screenPos,
-			}
-			c.visibleInfo = append(c.visibleInfo, chunkInfo)
-		}
-	}
-
-}
 
 func (c *ChunkRender) freeHiddenChunks() {
 	diff := sdl.Rect{
@@ -230,42 +158,5 @@ func (c *ChunkRender) freeHiddenChunks() {
 				}
 			}
 		}
-	}
-}
-
-func initGridTexture() {
-	surface, err := sdl.CreateRGBSurface(0, components.ChunkSize, components.ChunkSize, 32, 0xff0000, 0xff00, 0xff, 0xff000000)
-	if err != nil {
-		panic(err)
-	}
-	defer surface.Free()
-
-	// Make surface transparent
-	err = surface.FillRect(&sdl.Rect{0, 0, components.ChunkSize, components.ChunkSize}, 0)
-	if err != nil {
-		panic(err)
-	}
-
-	for i := 0; i < components.ChunkTile+1; i++ {
-		var size int32
-		switch i {
-		case 0, components.ChunkTile:
-			size = 4
-		default:
-			size = 2
-		}
-		err = surface.FillRect(&sdl.Rect{int32(i)*components.TileSize - size/2, 0, size, components.ChunkSize}, black)
-		if err != nil {
-			panic(err)
-		}
-		err = surface.FillRect(&sdl.Rect{0, int32(i)*components.TileSize - size/2, components.ChunkSize, size}, black)
-		if err != nil {
-			panic(err)
-		}
-	}
-
-	gridTexture, err = engine.Renderer.CreateTextureFromSurface(surface)
-	if err != nil {
-		panic(err)
 	}
 }

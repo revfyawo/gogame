@@ -34,6 +34,8 @@ func (mm *MessageManager) Dispatch(message ecs.Message) {
 		return
 	}
 	for _, ch := range listeners {
-		ch <- message
+		go func() {
+			ch <- message
+		}()
 	}
 }

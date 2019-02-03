@@ -7,6 +7,11 @@ type System interface {
 	RemoveEntity(*BasicEntity)
 }
 
+type RenderSystem interface {
+	UpdateFrame(time.Duration)
+	RemoveEntity(*BasicEntity)
+}
+
 type Initializer interface {
 	New(*World)
 }

@@ -28,6 +28,24 @@ type InputManager struct {
 func NewInputManager() *InputManager {
 	im := InputManager{}
 	im.keys = make(KeyMap)
+	x, y, state := sdl.GetMouseState()
+	im.mouse.x = x
+	im.mouse.y = y
+	if state&sdl.ButtonRMask() != 0 {
+		im.mouse.pressed[sdl.BUTTON_RIGHT-1] = sdl.PRESSED
+	}
+	if state&sdl.ButtonLMask() != 0 {
+		im.mouse.pressed[sdl.BUTTON_LEFT-1] = sdl.PRESSED
+	}
+	if state&sdl.ButtonMMask() != 0 {
+		im.mouse.pressed[sdl.BUTTON_MIDDLE-1] = sdl.PRESSED
+	}
+	if state&sdl.ButtonX1Mask() != 0 {
+		im.mouse.pressed[sdl.BUTTON_X1-1] = sdl.PRESSED
+	}
+	if state&sdl.ButtonX2Mask() != 0 {
+		im.mouse.pressed[sdl.BUTTON_X2-1] = sdl.PRESSED
+	}
 	return &im
 }
 
@@ -104,7 +122,7 @@ func (im *InputManager) Clicked(button uint8) bool {
 	return im.mouse.pressed[button-1] == sdl.PRESSED
 }
 
-func (im *InputManager) MousePosition(button uint8) sdl.Point {
+func (im *InputManager) MousePosition() sdl.Point {
 	return sdl.Point{X: im.mouse.x, Y: im.mouse.y}
 }
 

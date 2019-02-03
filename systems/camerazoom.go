@@ -9,18 +9,18 @@ import (
 
 const zoomSpeed = 0.125
 
-type Mouse struct {
+type CameraZoom struct {
 	ChunkPos components.ChunkPosition
 	camera   *Camera
 }
 
-func (ms *Mouse) New(world *ecs.World) {
+func (cz *CameraZoom) New(world *ecs.World) {
 	camera := false
 	for _, sys := range world.Systems() {
 		switch s := sys.(type) {
 		case *Camera:
 			camera = true
-			ms.camera = s
+			cz.camera = s
 		}
 	}
 	if !camera {
@@ -28,14 +28,14 @@ func (ms *Mouse) New(world *ecs.World) {
 	}
 }
 
-func (ms *Mouse) Update(time.Duration) {
+func (cz *CameraZoom) Update(time.Duration) {
 	wheel := engine.Input.Wheel()
 	switch wheel {
 	case 1:
-		ms.camera.Scale *= 1 + zoomSpeed
+		engine.Message.Dispatch(ChangeScaleMessage{cz.camera.Scale() * (1 + zoomSpeed)})
 	case -1:
-		ms.camera.Scale *= 1 - zoomSpeed
+		engine.Message.Dispatch(ChangeScaleMessage{cz.camera.Scale() * (1 - zoomSpeed)})
 	}
 }
 
-func (*Mouse) RemoveEntity(*ecs.BasicEntity) {}
+func (*CameraZoom) RemoveEntity(*ecs.BasicEntity) {}
