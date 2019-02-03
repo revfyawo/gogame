@@ -18,9 +18,6 @@ var (
 	Message  *MessageManager
 	Renderer *sdl.Renderer
 
-	FrameDelta  time.Duration
-	UpdateDelta time.Duration
-
 	currentScene ecs.Scene
 	currentWorld *ecs.World
 	quit         = make(chan bool, 1)
@@ -67,18 +64,12 @@ func Run(scene ecs.Scene) {
 }
 
 func runUpdateLoop() {
-	var now, start, lastUpdate time.Time
-	start = time.Now()
-	lastUpdate = start
 	var ticker = time.NewTicker(time.Second / UPSLimit)
 	defer ticker.Stop()
 	for {
 		<-ticker.C
 		// Notify render loop that update succeeded
 		updateDone <- true
-		now = time.Now()
-		UpdateDelta = now.Sub(lastUpdate)
-		lastUpdate = now
 
 		// SDL uses same address for each event: need to copy value before passing it to input manager
 		// can't group cases, because copy wouldn't work because Event is an interface
@@ -109,9 +100,6 @@ func runUpdateLoop() {
 
 func runFrameLoop() {
 	var err error
-	var now, start, lastFrame time.Time
-	start = time.Now()
-	lastFrame = start
 	var ticker = time.NewTicker(time.Second / FPSLimit)
 	defer ticker.Stop()
 	for {
@@ -133,10 +121,6 @@ func runFrameLoop() {
 				}
 			}
 		}
-
-		now = time.Now()
-		FrameDelta = now.Sub(lastFrame)
-		lastFrame = now
 
 		err = Renderer.Clear()
 		if err != nil {
