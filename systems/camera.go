@@ -13,6 +13,7 @@ import (
 const speed = 5
 
 type Camera struct {
+	// Need to call RLock() from all render systems before reading
 	lock      sync.RWMutex
 	position  components.ChunkPosition
 	messages  chan ecs.Message

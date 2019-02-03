@@ -9,6 +9,7 @@ import (
 
 const (
 	FPSLimit = 60
+	UPSLimit = 60
 )
 
 var (
@@ -19,6 +20,7 @@ var (
 	currentScene ecs.Scene
 	currentWorld *ecs.World
 	quit         = make(chan bool, 1)
+	updateDone   = make(chan bool, 2*UPSLimit)
 )
 
 func Run(scene ecs.Scene) {
@@ -63,11 +65,13 @@ func runUpdateLoop() {
 	start = time.Now()
 	lastUpdate = start
 	lastSecond = start
-	var ticker = time.NewTicker(time.Second / FPSLimit)
+	var ticker = time.NewTicker(time.Second / UPSLimit)
 	defer ticker.Stop()
 	for {
 		<-ticker.C
 		counter++
+		// Notify render loop that update succeeded
+		updateDone <- true
 		now = time.Now()
 		if lastSecond.Add(time.Second).Before(time.Now()) {
 			lastSecond = now
@@ -116,6 +120,24 @@ func runFrameLoop() {
 	for {
 		<-ticker.C
 		counter++
+		// Wait for update, so frame rate can't be higher than update rate
+		// Empty channel, if frame rate lower than update rate
+		done := false
+		pending := true
+		for pending {
+			select {
+			case <-quit:
+				return
+			case <-updateDone:
+				done = true
+				continue
+			default:
+				if done {
+					pending = false
+				}
+			}
+		}
+
 		now = time.Now()
 		if lastSecond.Add(time.Second).Before(time.Now()) {
 			lastSecond = now
@@ -123,12 +145,6 @@ func runFrameLoop() {
 		}
 		delta = now.Sub(lastFrame)
 		lastFrame = now
-
-		select {
-		case <-quit:
-			return
-		default:
-		}
 
 		err = Renderer.Clear()
 		if err != nil {

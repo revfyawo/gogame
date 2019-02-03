@@ -15,7 +15,7 @@ type MouseZoom struct {
 func (mz *MouseZoom) New(world *ecs.World) {
 	camera := false
 	mouseChunk := false
-	for _, sys := range world.Systems() {
+	for _, sys := range world.UpdateSystems() {
 		switch s := sys.(type) {
 		case *Camera:
 			mz.camera = s

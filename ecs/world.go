@@ -1,30 +1,35 @@
 package ecs
 
-import "time"
+import (
+	"log"
+	"time"
+)
 
 type World struct {
-	systems       []System
+	updateSystems []UpdateSystem
 	renderSystems []RenderSystem
 }
 
-func (w *World) AddSystem(s System) {
-	init, ok := s.(Initializer)
-	if ok {
+func (w *World) AddSystem(sys System) {
+	init, initOK := sys.(Initializer)
+	update, updateOK := sys.(UpdateSystem)
+	render, renderOK := sys.(RenderSystem)
+	if !updateOK && !renderOK {
+		log.Panic("system", sys, "is neither an UpdateSystem nor a RenderSystem")
+	}
+	if initOK {
 		init.New(w)
 	}
-	w.systems = append(w.systems, s)
-}
-
-func (w *World) AddRenderSystem(s RenderSystem) {
-	init, ok := s.(Initializer)
-	if ok {
-		init.New(w)
+	if updateOK {
+		w.updateSystems = append(w.updateSystems, update)
 	}
-	w.renderSystems = append(w.renderSystems, s)
+	if renderOK {
+		w.renderSystems = append(w.renderSystems, render)
+	}
 }
 
 func (w *World) Update(d time.Duration) {
-	for _, s := range w.systems {
+	for _, s := range w.updateSystems {
 		s.Update(d)
 	}
 }
@@ -35,6 +40,10 @@ func (w *World) UpdateRender(d time.Duration) {
 	}
 }
 
-func (w *World) Systems() []System {
-	return w.systems
+func (w *World) UpdateSystems() []UpdateSystem {
+	return w.updateSystems
+}
+
+func (w *World) RenderSystems() []RenderSystem {
+	return w.renderSystems
 }

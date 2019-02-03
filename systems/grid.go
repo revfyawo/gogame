@@ -5,17 +5,20 @@ import (
 	"github.com/revfyawo/gogame/ecs"
 	"github.com/revfyawo/gogame/engine"
 	"github.com/veandco/go-sdl2/sdl"
+	"sync"
 	"time"
 )
 
 type Grid struct {
 	camera *Camera
 	show   bool
+	// Need to lock for `show` field because it is written un Update & read in UpdateFrame
+	lock sync.RWMutex
 }
 
 func (g *Grid) New(world *ecs.World) {
 	camera := false
-	for _, sys := range world.Systems() {
+	for _, sys := range world.UpdateSystems() {
 		switch s := sys.(type) {
 		case *Camera:
 			camera = true
@@ -29,17 +32,27 @@ func (g *Grid) New(world *ecs.World) {
 }
 
 func (g *Grid) Update(time.Duration) {
+	g.lock.Lock()
+	defer g.lock.Unlock()
 	if engine.Input.JustPressed(sdl.SCANCODE_F1) {
 		g.show = !g.show
 	}
-	if g.show {
+}
+
+func (g *Grid) UpdateFrame(time.Duration) {
+	g.lock.RLock()
+	show := g.show
+	g.lock.RUnlock()
+	if show {
 		w, h, err := engine.Renderer.GetOutputSize()
 		if err != nil {
 			panic(err)
 		}
 
+		g.camera.RLock()
 		camPos := g.camera.Position()
 		scale := g.camera.Scale()
+		g.camera.RUnlock()
 		scaledCS := int32(components.ChunkSize * scale)
 		var lineWidth int32
 		if scaledCS <= 64 {

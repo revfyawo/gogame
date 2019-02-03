@@ -16,7 +16,7 @@ type CameraZoom struct {
 
 func (cz *CameraZoom) New(world *ecs.World) {
 	camera := false
-	for _, sys := range world.Systems() {
+	for _, sys := range world.UpdateSystems() {
 		switch s := sys.(type) {
 		case *Camera:
 			camera = true
