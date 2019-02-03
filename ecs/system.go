@@ -1,18 +1,16 @@
 package ecs
 
-import "time"
-
 type System interface {
 	RemoveEntity(*BasicEntity)
 }
 
 type UpdateSystem interface {
-	Update(time.Duration)
+	Update()
 	RemoveEntity(*BasicEntity)
 }
 
 type RenderSystem interface {
-	UpdateFrame(time.Duration)
+	UpdateFrame()
 	RemoveEntity(*BasicEntity)
 }
 

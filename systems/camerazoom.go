@@ -4,7 +4,6 @@ import (
 	"github.com/revfyawo/gogame/components"
 	"github.com/revfyawo/gogame/ecs"
 	"github.com/revfyawo/gogame/engine"
-	"time"
 )
 
 const zoomSpeed = 0.125
@@ -28,7 +27,7 @@ func (cz *CameraZoom) New(world *ecs.World) {
 	}
 }
 
-func (cz *CameraZoom) Update(time.Duration) {
+func (cz *CameraZoom) Update() {
 	wheel := engine.Input.Wheel()
 	switch wheel {
 	case 1:

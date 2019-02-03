@@ -6,7 +6,6 @@ import (
 	"github.com/revfyawo/gogame/engine"
 	"github.com/veandco/go-sdl2/sdl"
 	"sync"
-	"time"
 )
 
 type Grid struct {
@@ -31,7 +30,7 @@ func (g *Grid) New(world *ecs.World) {
 	engine.Input.Register(sdl.SCANCODE_F1)
 }
 
-func (g *Grid) Update(time.Duration) {
+func (g *Grid) Update() {
 	g.lock.Lock()
 	defer g.lock.Unlock()
 	if engine.Input.JustPressed(sdl.SCANCODE_F1) {
@@ -39,7 +38,7 @@ func (g *Grid) Update(time.Duration) {
 	}
 }
 
-func (g *Grid) UpdateFrame(time.Duration) {
+func (g *Grid) UpdateFrame() {
 	g.lock.RLock()
 	show := g.show
 	g.lock.RUnlock()

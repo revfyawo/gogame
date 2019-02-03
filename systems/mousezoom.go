@@ -4,7 +4,6 @@ import (
 	"github.com/revfyawo/gogame/ecs"
 	"github.com/revfyawo/gogame/engine"
 	"github.com/veandco/go-sdl2/sdl"
-	"time"
 )
 
 type MouseZoom struct {
@@ -33,7 +32,7 @@ func (mz *MouseZoom) New(world *ecs.World) {
 	}
 }
 
-func (mz *MouseZoom) Update(time.Duration) {
+func (mz *MouseZoom) Update() {
 	wheel := engine.Input.Wheel()
 	var newScale float64
 	switch wheel {

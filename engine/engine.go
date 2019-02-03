@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/revfyawo/gogame/ecs"
 	"github.com/veandco/go-sdl2/sdl"
+	"github.com/veandco/go-sdl2/ttf"
 	"time"
 )
 
@@ -17,6 +18,9 @@ var (
 	Message  *MessageManager
 	Renderer *sdl.Renderer
 
+	FrameDelta  time.Duration
+	UpdateDelta time.Duration
+
 	currentScene ecs.Scene
 	currentWorld *ecs.World
 	quit         = make(chan bool, 1)
@@ -29,6 +33,10 @@ func Run(scene ecs.Scene) {
 		panic(err)
 	}
 	defer sdl.Quit()
+	if err := ttf.Init(); err != nil {
+		panic(err)
+	}
+	defer ttf.Quit()
 
 	window, err := sdl.CreateWindow("gogame", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED,
 		0, 0, sdl.WINDOW_FULLSCREEN_DESKTOP)
@@ -59,25 +67,17 @@ func Run(scene ecs.Scene) {
 }
 
 func runUpdateLoop() {
-	var counter int
-	var now, start, lastUpdate, lastSecond time.Time
-	var delta time.Duration
+	var now, start, lastUpdate time.Time
 	start = time.Now()
 	lastUpdate = start
-	lastSecond = start
 	var ticker = time.NewTicker(time.Second / UPSLimit)
 	defer ticker.Stop()
 	for {
 		<-ticker.C
-		counter++
 		// Notify render loop that update succeeded
 		updateDone <- true
 		now = time.Now()
-		if lastSecond.Add(time.Second).Before(time.Now()) {
-			lastSecond = now
-			counter = 0
-		}
-		delta = now.Sub(lastUpdate)
+		UpdateDelta = now.Sub(lastUpdate)
 		lastUpdate = now
 
 		// SDL uses same address for each event: need to copy value before passing it to input manager
@@ -103,23 +103,19 @@ func runUpdateLoop() {
 		}
 
 		Input.Update()
-		currentWorld.Update(delta)
+		currentWorld.Update()
 	}
 }
 
 func runFrameLoop() {
 	var err error
-	var counter int
-	var now, start, lastFrame, lastSecond time.Time
-	var delta time.Duration
+	var now, start, lastFrame time.Time
 	start = time.Now()
 	lastFrame = start
-	lastSecond = start
 	var ticker = time.NewTicker(time.Second / FPSLimit)
 	defer ticker.Stop()
 	for {
 		<-ticker.C
-		counter++
 		// Wait for update, so frame rate can't be higher than update rate
 		// Empty channel, if frame rate lower than update rate
 		done := false
@@ -139,11 +135,7 @@ func runFrameLoop() {
 		}
 
 		now = time.Now()
-		if lastSecond.Add(time.Second).Before(time.Now()) {
-			lastSecond = now
-			counter = 0
-		}
-		delta = now.Sub(lastFrame)
+		FrameDelta = now.Sub(lastFrame)
 		lastFrame = now
 
 		err = Renderer.Clear()
@@ -151,7 +143,7 @@ func runFrameLoop() {
 			panic(err)
 		}
 
-		currentWorld.UpdateRender(delta)
+		currentWorld.UpdateRender()
 		Renderer.Present()
 	}
 }

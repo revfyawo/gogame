@@ -46,7 +46,7 @@ func (c *ChunkGen) New(world *ecs.World) {
 	engine.Input.Register(sdl.SCANCODE_F5)
 }
 
-func (c *ChunkGen) Update(d time.Duration) {
+func (c *ChunkGen) Update() {
 	if engine.Input.JustPressed(sdl.SCANCODE_F5) {
 		c.mapSeed = time.Now().UnixNano()
 		rand.Seed(c.mapSeed)
