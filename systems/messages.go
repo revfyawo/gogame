@@ -10,6 +10,7 @@ const (
 	NewChunkMessageType = iota
 	ChangeScaleMessageType
 	SetCameraPositionMessageType
+	GenerateWorldMessageType
 )
 
 type NewChunkMessage struct {
@@ -34,4 +35,10 @@ type SetCameraPositionMessage struct {
 
 func (SetCameraPositionMessage) Type() ecs.MessageType {
 	return SetCameraPositionMessageType
+}
+
+type GenerateWorldMessage struct{}
+
+func (GenerateWorldMessage) Type() ecs.MessageType {
+	return GenerateWorldMessageType
 }

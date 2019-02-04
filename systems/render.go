@@ -20,6 +20,7 @@ type ChunkRender struct {
 func (c *ChunkRender) New(world *ecs.World) {
 	c.chunks = make(map[sdl.Point]*entities.Chunk)
 	c.messages = make(chan ecs.Message, 10)
+	engine.Message.Listen(GenerateWorldMessageType, c.messages)
 	engine.Message.Listen(NewChunkMessageType, c.messages)
 
 	camera := false
@@ -50,6 +51,17 @@ func (c *ChunkRender) UpdateFrame() {
 					}
 					m.Chunk.TilesTex = nil
 				}
+			case GenerateWorldMessage:
+				for _, chunk := range c.chunks {
+					if chunk.TilesTex != nil {
+						err := chunk.TilesTex.Destroy()
+						if err != nil {
+							panic(err)
+						}
+						chunk.TilesTex = nil
+					}
+				}
+				c.chunks = make(map[sdl.Point]*entities.Chunk)
 			}
 		default:
 			pending = false
