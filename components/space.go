@@ -6,8 +6,7 @@ import (
 )
 
 type Space struct {
-	Rect  sdl.Rect
-	Scale float32
+	Rect sdl.Rect
 }
 
 const (
