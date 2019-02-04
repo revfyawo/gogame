@@ -9,69 +9,69 @@ import (
 	"math"
 )
 
-type Landscapes struct {
+type LandscapeGen struct {
 	chunks     map[sdl.Point]*entities.Chunk
 	messages   chan ecs.Message
-	landscapes *components.Landscapes
+	landscapes *Landscapes
 	toGenerate []*entities.Chunk
 	workChan   chan *entities.Chunk
-	doneChan   chan *components.Landscapes
+	doneChan   chan *Landscapes
 }
 
-func (ls *Landscapes) New(*ecs.World) {
-	ls.messages = make(chan ecs.Message, 10)
-	ls.workChan = make(chan *entities.Chunk, parallelGen)
-	ls.doneChan = make(chan *components.Landscapes, parallelGen)
-	engine.Message.Listen(GenerateWorldMessageType, ls.messages)
-	engine.Message.Listen(NewChunkMessageType, ls.messages)
+func (lg *LandscapeGen) New(*ecs.World) {
+	lg.messages = make(chan ecs.Message, 10)
+	lg.workChan = make(chan *entities.Chunk, parallelGen)
+	lg.doneChan = make(chan *Landscapes, parallelGen)
+	engine.Message.Listen(GenerateWorldMessageType, lg.messages)
+	engine.Message.Listen(NewChunkMessageType, lg.messages)
 }
 
-func (ls *Landscapes) Update() {
+func (lg *LandscapeGen) Update() {
 	pending := true
 	for pending {
 		select {
-		case message := <-ls.messages:
+		case message := <-lg.messages:
 			switch m := message.(type) {
 			case NewChunkMessage:
 				chunk := m.Chunk
-				ls.chunks[sdl.Point{chunk.Rect.X, chunk.Rect.Y}] = chunk
-				ls.toGenerate = append(ls.toGenerate, chunk)
+				lg.chunks[sdl.Point{chunk.Rect.X, chunk.Rect.Y}] = chunk
+				lg.toGenerate = append(lg.toGenerate, chunk)
 			case GenerateWorldMessage:
-				ls.chunks = make(map[sdl.Point]*entities.Chunk)
-				ls.landscapes = components.NewLandscapes()
-				ls.toGenerate = []*entities.Chunk{}
+				lg.chunks = make(map[sdl.Point]*entities.Chunk)
+				lg.landscapes = NewLandscapes()
+				lg.toGenerate = []*entities.Chunk{}
 			}
 		default:
 			pending = false
 		}
 	}
 
-	if ls.toGenerate != nil && len(ls.toGenerate) > 0 {
-		max := int(math.Min(float64(len(ls.toGenerate)), parallelGen))
+	if lg.toGenerate != nil && len(lg.toGenerate) > 0 {
+		max := int(math.Min(float64(len(lg.toGenerate)), parallelGen))
 		for i := 0; i < max; i++ {
-			ls.workChan <- ls.toGenerate[i]
-			go ls.generateLandscape()
+			lg.workChan <- lg.toGenerate[i]
+			go lg.generateLandscape()
 		}
-		ls.toGenerate = ls.toGenerate[max:]
+		lg.toGenerate = lg.toGenerate[max:]
 		for i := 0; i < max; i++ {
-			landscapes := <-ls.doneChan
-			ls.landscapes.Merge(landscapes)
+			landscapes := <-lg.doneChan
+			lg.landscapes.Merge(landscapes)
 		}
 	}
 }
 
-func (*Landscapes) RemoveEntity(*ecs.BasicEntity) {}
+func (*LandscapeGen) RemoveEntity(*ecs.BasicEntity) {}
 
-func (ls *Landscapes) generateLandscape() {
-	chunk := <-ls.workChan
+func (lg *LandscapeGen) generateLandscape() {
+	chunk := <-lg.workChan
 
 	chunkPoint := sdl.Point{chunk.Rect.X, chunk.Rect.Y}
 	var tile, tileLeft, tileUp, tileRight, tileDown sdl.Point
 	var biome, biomeLeft, biomeUp, biomeRight, biomeDown components.Biome
-	var landscape, landscapeLeft, landscapeUp, landscapeRight, landscapeDown *components.Landscape
-	landscape = components.NewLandscape(chunk.Biomes[0][0])
+	var landscape, landscapeLeft, landscapeUp, landscapeRight, landscapeDown *entities.Landscape
+	landscape = entities.NewLandscape(chunk.Biomes[0][0])
 	landscape.AddTile(chunkPoint, sdl.Point{0, 0})
-	landscapes := components.NewLandscapes()
+	landscapes := NewLandscapes()
 	landscapes.Add(landscape)
 
 	var i, j int32
@@ -119,19 +119,19 @@ func (ls *Landscapes) generateLandscape() {
 			if i != components.ChunkTile-1 && biome == biomeRight {
 				landscape.AddTile(chunkPoint, tileRight)
 			} else if i != components.ChunkTile-1 {
-				landscapeRight = components.NewLandscape(biomeRight)
+				landscapeRight = entities.NewLandscape(biomeRight)
 				landscapeRight.AddTile(chunkPoint, tileRight)
 				landscapes.Add(landscapeRight)
 			}
 			if j != components.ChunkTile-1 && biome == biomeDown {
 				landscape.AddTile(chunkPoint, tileDown)
 			} else if j != components.ChunkTile-1 {
-				landscapeDown = components.NewLandscape(biomeDown)
+				landscapeDown = entities.NewLandscape(biomeDown)
 				landscapeDown.AddTile(chunkPoint, tileDown)
 				landscapes.Add(landscapeDown)
 			}
 
 		}
 	}
-	ls.doneChan <- landscapes
+	lg.doneChan <- landscapes
 }
