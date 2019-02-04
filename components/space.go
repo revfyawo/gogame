@@ -11,7 +11,7 @@ type Space struct {
 }
 
 const (
-	TileSize  = 8
+	TileSize  = 1
 	ChunkTile = 32
 	ChunkSize = ChunkTile * TileSize
 )
