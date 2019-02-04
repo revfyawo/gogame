@@ -32,19 +32,12 @@ func (uc *UpdatesCounter) New(*ecs.World) {
 }
 
 func (uc *UpdatesCounter) UpdateFrame() {
+	uc.lock.Lock()
 	if !uc.enabled {
+		uc.lock.Unlock()
 		return
 	}
-	now := time.Now()
-	uc.lock.Lock()
 	uc.frameCount++
-	if now.Sub(uc.lastSecond) > time.Second {
-		uc.lastSecond = now
-		uc.updateRate = uc.updateCount
-		uc.frameRate = uc.frameCount
-		uc.updateCount = 0
-		uc.frameCount = 0
-	}
 	update := uc.updateRate
 	frame := uc.frameRate
 	uc.lock.Unlock()
@@ -98,6 +91,14 @@ func (uc *UpdatesCounter) Update() {
 	}
 	if !uc.enabled {
 		return
+	}
+	now := time.Now()
+	if now.Sub(uc.lastSecond) > time.Second {
+		uc.lastSecond = now
+		uc.updateRate = uc.updateCount
+		uc.frameRate = uc.frameCount
+		uc.updateCount = 0
+		uc.frameCount = 0
 	}
 	uc.updateCount++
 }
