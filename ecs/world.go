@@ -2,7 +2,6 @@ package ecs
 
 import (
 	"log"
-	"time"
 )
 
 type World struct {
@@ -28,15 +27,15 @@ func (w *World) AddSystem(sys System) {
 	}
 }
 
-func (w *World) Update(d time.Duration) {
+func (w *World) Update() {
 	for _, s := range w.updateSystems {
-		s.Update(d)
+		s.Update()
 	}
 }
 
-func (w *World) UpdateRender(d time.Duration) {
+func (w *World) UpdateRender() {
 	for _, s := range w.renderSystems {
-		s.UpdateFrame(d)
+		s.UpdateFrame()
 	}
 }
 

@@ -6,7 +6,6 @@ import (
 	"github.com/revfyawo/gogame/engine"
 	"github.com/revfyawo/gogame/entities"
 	"github.com/veandco/go-sdl2/sdl"
-	"time"
 )
 
 type ChunkRender struct {
@@ -36,7 +35,7 @@ func (c *ChunkRender) New(world *ecs.World) {
 	}
 }
 
-func (c *ChunkRender) UpdateFrame(d time.Duration) {
+func (c *ChunkRender) UpdateFrame() {
 	pending := true
 	for pending {
 		select {

@@ -17,9 +17,9 @@ const parallelGen = 8
 type ChunkGen struct {
 	mapSeed     int64
 	chunks      map[sdl.Point]*entities.Chunk
-	noiseHeight opensimplex.Noise
-	noiseTemp   opensimplex.Noise
-	noiseRain   opensimplex.Noise
+	noiseHeight components.Noise
+	noiseTemp   components.Noise
+	noiseRain   components.Noise
 	toGenerate  []sdl.Point
 	workChan    chan *entities.Chunk
 	chunkChan   chan *entities.Chunk
@@ -32,9 +32,9 @@ func (c *ChunkGen) New(world *ecs.World) {
 
 	c.mapSeed = time.Now().UnixNano()
 	rand.Seed(c.mapSeed)
-	c.noiseHeight = opensimplex.New(rand.Int63())
-	c.noiseTemp = opensimplex.New(rand.Int63())
-	c.noiseRain = opensimplex.New(rand.Int63())
+	c.noiseHeight = components.Noise{opensimplex.New(rand.Int63())}
+	c.noiseTemp = components.Noise{opensimplex.New(rand.Int63())}
+	c.noiseRain = components.Noise{opensimplex.New(rand.Int63())}
 
 	for x := -20; x <= 20; x++ {
 		for y := -20; y <= 20; y++ {
@@ -46,13 +46,13 @@ func (c *ChunkGen) New(world *ecs.World) {
 	engine.Input.Register(sdl.SCANCODE_F5)
 }
 
-func (c *ChunkGen) Update(d time.Duration) {
+func (c *ChunkGen) Update() {
 	if engine.Input.JustPressed(sdl.SCANCODE_F5) {
 		c.mapSeed = time.Now().UnixNano()
 		rand.Seed(c.mapSeed)
-		c.noiseHeight = opensimplex.New(rand.Int63())
-		c.noiseTemp = opensimplex.New(rand.Int63())
-		c.noiseRain = opensimplex.New(rand.Int63())
+		c.noiseHeight = components.Noise{opensimplex.New(rand.Int63())}
+		c.noiseTemp = components.Noise{opensimplex.New(rand.Int63())}
+		c.noiseRain = components.Noise{opensimplex.New(rand.Int63())}
 		c.toGenerate = nil
 		for point := range c.chunks {
 			c.toGenerate = append(c.toGenerate, point)

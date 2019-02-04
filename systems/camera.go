@@ -7,7 +7,6 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 	"math"
 	"sync"
-	"time"
 )
 
 const speed = 5
@@ -41,7 +40,7 @@ func (c *Camera) New(world *ecs.World) {
 	engine.Message.Listen(SetCameraPositionMessageType, c.messages)
 }
 
-func (c *Camera) Update(d time.Duration) {
+func (c *Camera) Update() {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	pending := true

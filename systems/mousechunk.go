@@ -5,7 +5,6 @@ import (
 	"github.com/revfyawo/gogame/ecs"
 	"github.com/revfyawo/gogame/engine"
 	"github.com/veandco/go-sdl2/sdl"
-	"time"
 )
 
 type MouseChunk struct {
@@ -29,7 +28,7 @@ func (mc *MouseChunk) New(world *ecs.World) {
 	}
 }
 
-func (mc *MouseChunk) Update(time.Duration) {
+func (mc *MouseChunk) Update() {
 	mc.position = engine.Input.MousePosition()
 	if mc.position != mc.lastPos {
 		mc.lastPos = mc.position
