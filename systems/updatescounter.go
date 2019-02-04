@@ -50,11 +50,25 @@ func (uc *UpdatesCounter) UpdateFrame() {
 	uc.lock.Unlock()
 
 	text := fmt.Sprintf("%v FPS / %v UPS", frame, update)
-	surface, err := uc.font.RenderUTF8Blended(text, sdl.Color{0xff, 0xff, 0xff, 0xff})
+	fontSurface, err := uc.font.RenderUTF8Blended(text, sdl.Color{0xff, 0xff, 0xff, 0xff})
+	if err != nil {
+		panic(err)
+	}
+	defer fontSurface.Free()
+
+	surface, err := sdl.CreateRGBSurface(0, fontSurface.W, fontSurface.H, 32, 0xff0000, 0xff00, 0xff, 0xff000000)
 	if err != nil {
 		panic(err)
 	}
 	defer surface.Free()
+	err = surface.FillRect(nil, 0x80000000)
+	if err != nil {
+		panic(err)
+	}
+	err = fontSurface.Blit(nil, surface, &sdl.Rect{0, 0, surface.W, surface.H})
+	if err != nil {
+		panic(err)
+	}
 
 	if uc.texture != nil {
 		err = uc.texture.Destroy()
