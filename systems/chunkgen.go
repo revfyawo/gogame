@@ -36,6 +36,7 @@ func (c *ChunkGen) New(world *ecs.World) {
 	c.noiseTemp = components.Noise{opensimplex.New(rand.Int63())}
 	c.noiseRain = components.Noise{opensimplex.New(rand.Int63())}
 
+	engine.Message.Dispatch(GenerateWorldMessage{})
 	for x := -20; x <= 20; x++ {
 		for y := -20; y <= 20; y++ {
 			chunk := entities.NewChunk(components.Space{Rect: sdl.Rect{X: int32(x), Y: int32(y)}})
@@ -48,6 +49,7 @@ func (c *ChunkGen) New(world *ecs.World) {
 
 func (c *ChunkGen) Update() {
 	if engine.Input.JustPressed(sdl.SCANCODE_F5) {
+		engine.Message.Dispatch(GenerateWorldMessage{})
 		c.mapSeed = time.Now().UnixNano()
 		rand.Seed(c.mapSeed)
 		c.noiseHeight = components.Noise{opensimplex.New(rand.Int63())}

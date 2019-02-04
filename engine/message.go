@@ -34,8 +34,10 @@ func (mm *MessageManager) Dispatch(message ecs.Message) {
 		return
 	}
 	for _, ch := range listeners {
-		go func() {
-			ch <- message
-		}()
+		go mm.send(message, ch)
 	}
+}
+
+func (mm *MessageManager) send(message ecs.Message, ch chan<- ecs.Message) {
+	ch <- message
 }

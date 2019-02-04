@@ -4,9 +4,6 @@ const (
 	HeightNoiseStep = 0.01
 	TempNoiseStep   = 0.003
 	RainNoiseStep   = 0.003
-
-	WaterLevel  = -0.9
-	ShallowDiff = 0.2
 )
 
 type Chunk struct {
@@ -36,14 +33,6 @@ func (c *Chunk) Generate(heightNoise, tempNoise, rainNoise Noise, x, y int32) {
 
 			noise = heightNoise.EvalOctaves(xn, yn, HeightNoiseStep, 5)
 			c.Height[i][j] = noise
-			water := false
-			if noise < WaterLevel {
-				water = true
-				c.Biomes[i][j] = DeepWater
-			} else if noise < WaterLevel+ShallowDiff {
-				water = true
-				c.Biomes[i][j] = ShallowWater
-			}
 
 			noise = rainNoise.EvalOctaves(xn, yn, RainNoiseStep, 5)
 			if noise < -0.6 {
@@ -72,10 +61,17 @@ func (c *Chunk) Generate(heightNoise, tempNoise, rainNoise Noise, x, y int32) {
 				temp = Hottest
 			}
 			c.Temp[i][j] = temp
+		}
+	}
+	c.generateBiomes()
+}
 
-			if !water {
-				c.Biomes[i][j] = Biomes[temp][rain]
-			}
+func (c *Chunk) generateBiomes() {
+	for x := 0; x < ChunkTile; x++ {
+		for y := 0; y < ChunkTile; y++ {
+			rain := c.Rain[x][y]
+			temp := c.Temp[x][y]
+			c.Biomes[x][y] = Biomes[temp][rain]
 		}
 	}
 }
