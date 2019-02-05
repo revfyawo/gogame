@@ -1,7 +1,6 @@
 package systems
 
 import (
-	"fmt"
 	"github.com/revfyawo/gogame/components"
 	"github.com/revfyawo/gogame/ecs"
 	"github.com/revfyawo/gogame/engine"
@@ -11,13 +10,14 @@ import (
 )
 
 type LandscapeRender struct {
-	lock       sync.Mutex
-	camera     *Camera
-	mouseChunk *MouseChunk
-	mousePos   components.ChunkPosition
-	chunks     map[sdl.Point]*entities.Chunk
-	landscapes *Landscapes
-	messages   chan ecs.Message
+	lock          sync.Mutex
+	camera        *Camera
+	mouseChunk    *MouseChunk
+	mousePos      components.ChunkPosition
+	chunks        map[sdl.Point]*entities.Chunk
+	landscapes    *Landscapes
+	messages      chan ecs.Message
+	lastLandscape *entities.Landscape
 }
 
 func (lr *LandscapeRender) New(world *ecs.World) {
@@ -79,43 +79,73 @@ func (lr *LandscapeRender) UpdateFrame() {
 	landscape := lr.landscapes.Find(chunkPoint, tile, lr.chunks[chunkPoint].Biomes[tile.X][tile.Y])
 	if landscape == nil {
 		return
+	} else if lr.lastLandscape == nil {
+		lr.lastLandscape = landscape
 	}
 
-	border := landscape.Border()
+	border, changed := landscape.Border()
+	if border == nil {
+		return
+	}
+
 	lr.camera.RLock()
 	_, screenPos := lr.camera.GetVisibleChunks()
 	scaledCS := int32(components.ChunkSize * lr.camera.Scale())
 	lr.camera.RUnlock()
 
 	chunkPos := screenPos[mousePos.Chunk]
-	surface, err := sdl.CreateRGBSurface(0, components.ChunkSize, components.ChunkSize, 32, 0xff0000, 0xff00, 0xff, 0xff000000)
-	if err != nil {
-		panic(err)
-	}
-	defer surface.Free()
-
-	// Make transparent
-	err = surface.FillRect(nil, 0)
-	if err != nil {
-		panic(err)
-	}
-
-	// Color border tiles white
-	for _, tile := range border {
-		if tile.Chunk != chunkPoint {
-			fmt.Println("tile not in chunk")
-			continue
-		}
-		err = surface.FillRect(&sdl.Rect{tile.Tile.X * components.TileSize, tile.Tile.Y * components.TileSize, components.TileSize, components.TileSize}, 0xffffffff)
+	if landscape != lr.lastLandscape || changed || landscape.BorderTex == nil {
+		// Generating border texture
+		surface, err := sdl.CreateRGBSurface(0, components.ChunkSize, components.ChunkSize, 32, 0xff0000, 0xff00, 0xff, 0xff000000)
 		if err != nil {
 			panic(err)
 		}
+		defer surface.Free()
+
+		// Make surface transparent
+		err = surface.FillRect(nil, 0)
+		if err != nil {
+			panic(err)
+		}
+
+		// Color border tiles white
+		for _, tile := range border {
+			if tile.Chunk != chunkPoint {
+				continue
+			}
+			err = surface.FillRect(&sdl.Rect{tile.Tile.X * components.TileSize, tile.Tile.Y * components.TileSize, components.TileSize, components.TileSize}, 0xffffffff)
+			if err != nil {
+				panic(err)
+			}
+		}
+
+		texture, err := engine.Renderer.CreateTextureFromSurface(surface)
+		if err != nil {
+			panic(err)
+		}
+
+		// Free last used texture, and set current one
+		if landscape.BorderTex != nil {
+			err := landscape.BorderTex.Destroy()
+			if err != nil {
+				panic(err)
+			}
+		}
+		landscape.BorderTex = texture
+
+		// Free last selected landscape texture
+		if landscape != lr.lastLandscape && lr.lastLandscape != nil {
+			err := lr.lastLandscape.BorderTex.Destroy()
+			if err != nil {
+				panic(err)
+			}
+			lr.lastLandscape.BorderTex = nil
+		}
+		lr.lastLandscape = landscape
 	}
-	landscape.BorderTex, err = engine.Renderer.CreateTextureFromSurface(surface)
-	if err != nil {
-		panic(err)
-	}
-	err = engine.Renderer.Copy(landscape.BorderTex, nil, &sdl.Rect{chunkPos.X, chunkPos.Y, scaledCS, scaledCS})
+
+	// Rendering landscape border
+	err := engine.Renderer.Copy(landscape.BorderTex, nil, &sdl.Rect{chunkPos.X, chunkPos.Y, scaledCS, scaledCS})
 	if err != nil {
 		panic(err)
 	}

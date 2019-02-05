@@ -41,6 +41,7 @@ func (l *Landscape) Merge(other *Landscape) {
 			l.Tiles[chunkPoint][tilePoint] = tile
 		}
 	}
+	l.regenerateBorder = true
 }
 
 func (l *Landscape) Size() int {
@@ -51,9 +52,11 @@ func (l *Landscape) Size() int {
 	return size
 }
 
-func (l *Landscape) Border() []ChunkTilePosition {
+func (l *Landscape) Border() (border []ChunkTilePosition, changed bool) {
 	if !l.regenerateBorder && l.border != nil && len(l.border) > 0 {
-		return l.border
+		return l.border, false
+	} else if l.regenerateBorder {
+		l.regenerateBorder = false
 	}
 
 	// Find random point in landscape (first one)
@@ -73,7 +76,6 @@ func (l *Landscape) Border() []ChunkTilePosition {
 	}
 	pos.MoveX(1)
 	// Set first chunk & tile to leftmost point from random first one
-	var border []ChunkTilePosition
 	firstPos := pos
 	border = append(border, firstPos)
 
@@ -135,5 +137,5 @@ func (l *Landscape) Border() []ChunkTilePosition {
 		}
 	}
 	l.border = border
-	return border
+	return border, true
 }
