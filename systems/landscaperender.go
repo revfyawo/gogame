@@ -89,13 +89,17 @@ func (lr *LandscapeRender) UpdateFrame() {
 	}
 
 	lr.camera.RLock()
-	_, screenPos := lr.camera.GetVisibleChunks()
+	visible, screenPos := lr.camera.GetVisibleChunks()
 	scaledCS := int32(components.ChunkSize * lr.camera.Scale())
 	lr.camera.RUnlock()
+	// Return if chunk not visible
+	if mousePos.Chunk.X < visible.X || mousePos.Chunk.X >= visible.X+visible.W || mousePos.Chunk.Y < visible.Y || mousePos.Chunk.Y >= visible.Y+visible.H {
+		return
+	}
 
 	chunkPos := screenPos[mousePos.Chunk]
+	// Generating border texture if different from last frame
 	if landscape != lr.lastLandscape || changed || landscape.BorderTex == nil {
-		// Generating border texture
 		surface, err := sdl.CreateRGBSurface(0, components.ChunkSize, components.ChunkSize, 32, 0xff0000, 0xff00, 0xff, 0xff000000)
 		if err != nil {
 			panic(err)
