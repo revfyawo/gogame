@@ -109,11 +109,8 @@ func (lr *LandscapeRender) UpdateFrame() {
 		}
 
 		// Color border tiles white
-		for _, tile := range border {
-			if tile.Chunk != chunkPoint {
-				continue
-			}
-			err = surface.FillRect(&sdl.Rect{tile.Tile.X * components.TileSize, tile.Tile.Y * components.TileSize, components.TileSize, components.TileSize}, 0xffffffff)
+		for tile := range border[chunkPoint] {
+			err = surface.FillRect(&sdl.Rect{tile.X * components.TileSize, tile.Y * components.TileSize, components.TileSize, components.TileSize}, 0xffffffff)
 			if err != nil {
 				panic(err)
 			}
@@ -134,7 +131,7 @@ func (lr *LandscapeRender) UpdateFrame() {
 		landscape.BorderTex = texture
 
 		// Free last selected landscape texture
-		if landscape != lr.lastLandscape && lr.lastLandscape != nil {
+		if landscape != lr.lastLandscape && lr.lastLandscape != nil && lr.lastLandscape.BorderTex != nil {
 			err := lr.lastLandscape.BorderTex.Destroy()
 			if err != nil {
 				panic(err)
