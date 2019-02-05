@@ -24,10 +24,5 @@ func (l *Landscape) Merge(other *Landscape) {
 	if l.Biome != other.Biome {
 		panic("can't merge two landscapes with different biome")
 	}
-
-	for chunkPoint, chunk := range other.Tiles {
-		for tilePoint, tile := range chunk {
-			l.Tiles[chunkPoint][tilePoint] = tile
-		}
-	}
+	l.Landscape.Merge(&other.Landscape)
 }
