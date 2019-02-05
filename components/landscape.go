@@ -5,7 +5,9 @@ import (
 )
 
 type Landscape struct {
-	Tiles map[sdl.Point]map[sdl.Point]bool
+	Tiles            map[sdl.Point]map[sdl.Point]bool
+	border           []ChunkTilePosition
+	regenerateBorder bool
 }
 
 func (l *Landscape) AddTile(chunk, tile sdl.Point) {
@@ -13,6 +15,7 @@ func (l *Landscape) AddTile(chunk, tile sdl.Point) {
 		l.Tiles[chunk] = make(map[sdl.Point]bool)
 	}
 	l.Tiles[chunk][tile] = true
+	l.regenerateBorder = true
 }
 
 func (l *Landscape) Contains(chunk, tile sdl.Point) bool {
@@ -48,6 +51,89 @@ func (l *Landscape) Size() int {
 	return size
 }
 
-func (l *Landscape) RemoveChunk(chunk sdl.Point) {
-	delete(l.Tiles, chunk)
+func (l *Landscape) Border() []ChunkTilePosition {
+	if !l.regenerateBorder && l.border != nil && len(l.border) > 0 {
+		return l.border
+	}
+
+	// Find random point in landscape (first one)
+	var randPos ChunkTilePosition
+	for chunk, chunks := range l.Tiles {
+		for tile := range chunks {
+			randPos = ChunkTilePosition{chunk, tile}
+			break
+		}
+		break
+	}
+	pos := randPos
+
+	// Go left until we leave landscape
+	for l.Tiles[pos.Chunk][pos.Tile] != false {
+		pos.MoveX(-1)
+	}
+	pos.MoveX(1)
+	// Set first chunk & tile to leftmost point from random first one
+	var border []ChunkTilePosition
+	firstPos := pos
+	border = append(border, firstPos)
+
+	// Find next one in border
+	up := firstPos.Up()
+	right := firstPos.Right()
+	down := firstPos.Down()
+	if l.Tiles[up.Chunk][up.Tile] {
+		border = append(border, up)
+		pos = up
+	} else if l.Tiles[right.Chunk][right.Tile] {
+		border = append(border, right)
+		pos = right
+	} else if l.Tiles[down.Chunk][down.Tile] {
+		border = append(border, down)
+		pos = down
+	}
+	previous := firstPos
+
+	// Find previous one in order
+	firstPrevious := firstPos
+	if l.Tiles[down.Chunk][down.Tile] {
+		firstPrevious = down
+	} else if l.Tiles[right.Chunk][right.Tile] {
+		firstPrevious = right
+	} else if l.Tiles[up.Chunk][up.Tile] {
+		firstPrevious = up
+	}
+
+	var left ChunkTilePosition
+	for pos != firstPos || previous != firstPrevious {
+		left = pos.Left()
+		up = pos.Up()
+		right = pos.Right()
+		down = pos.Down()
+
+		// Find next tile in landscape from previous clockwise
+		var next ChunkTilePosition
+		for i := 0; i < 4; i++ {
+			switch previous {
+			case left:
+				next = up
+			case up:
+				next = right
+			case right:
+				next = down
+			case down:
+				next = left
+			}
+
+			if l.Tiles[next.Chunk][next.Tile] {
+				border = append(border, next)
+				previous = pos
+				pos = next
+				break
+			} else {
+				previous = next
+			}
+		}
+	}
+	l.border = border
+	return border
 }
