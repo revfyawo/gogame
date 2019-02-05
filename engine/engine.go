@@ -52,6 +52,12 @@ func Run(scene ecs.Scene) {
 		panic(err)
 	}
 
+	w, h, err := Renderer.GetOutputSize()
+	if err != nil {
+		panic(err)
+	}
+	window.WarpMouseInWindow(w/2, h/2)
+
 	// Initialize Input, Message, World and Scene
 	Input = NewInputManager()
 	Message = NewMessageManager()
