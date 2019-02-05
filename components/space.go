@@ -5,8 +5,12 @@ import (
 	"math"
 )
 
-type Space struct {
-	Rect sdl.Rect
+type Position struct {
+	sdl.Point
+}
+
+type Rect struct {
+	sdl.Rect
 }
 
 const (

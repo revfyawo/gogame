@@ -43,7 +43,7 @@ func (c *ChunkRender) UpdateFrame() {
 		case message := <-c.messages:
 			switch m := message.(type) {
 			case NewChunkMessage:
-				c.chunks[sdl.Point{m.Chunk.Rect.X, m.Chunk.Rect.Y}] = m.Chunk
+				c.chunks[sdl.Point{m.Chunk.X, m.Chunk.Y}] = m.Chunk
 				if m.Chunk.TilesTex != nil {
 					err := m.Chunk.TilesTex.Destroy()
 					if err != nil {

@@ -34,7 +34,7 @@ func (lg *LandscapeGen) Update() {
 			switch m := message.(type) {
 			case NewChunkMessage:
 				chunk := m.Chunk
-				lg.chunks[sdl.Point{chunk.Rect.X, chunk.Rect.Y}] = chunk
+				lg.chunks[sdl.Point{chunk.X, chunk.Y}] = chunk
 				lg.toGenerate = append(lg.toGenerate, chunk)
 			case GenerateWorldMessage:
 				lg.chunks = make(map[sdl.Point]*entities.Chunk)
@@ -66,7 +66,7 @@ func (*LandscapeGen) RemoveEntity(*ecs.BasicEntity) {}
 func (lg *LandscapeGen) generateLandscape() {
 	chunk := <-lg.workChan
 
-	chunkPoint := sdl.Point{chunk.Rect.X, chunk.Rect.Y}
+	chunkPoint := sdl.Point{chunk.X, chunk.Y}
 	var tile, tileLeft, tileUp, tileRight, tileDown sdl.Point
 	var biome, biomeLeft, biomeUp, biomeRight, biomeDown components.Biome
 	var landscape, landscapeLeft, landscapeUp, landscapeRight, landscapeDown *entities.Landscape

@@ -56,7 +56,7 @@ func (lr *LandscapeRender) UpdateFrame() {
 				lr.chunks = make(map[sdl.Point]*entities.Chunk)
 			case NewChunkMessage:
 				chunk := m.Chunk
-				lr.chunks[sdl.Point{chunk.Rect.X, chunk.Rect.Y}] = chunk
+				lr.chunks[sdl.Point{chunk.X, chunk.Y}] = chunk
 			case NewLandscapesMessage:
 				lr.landscapes = &m.Landscapes
 			}
@@ -73,7 +73,7 @@ func (lr *LandscapeRender) UpdateFrame() {
 	if chunk == nil {
 		return
 	}
-	chunkPoint := sdl.Point{chunk.Rect.X, chunk.Rect.Y}
+	chunkPoint := sdl.Point{chunk.X, chunk.Y}
 
 	tile := sdl.Point{mousePos.Position.X / components.TileSize, mousePos.Position.Y / components.TileSize}
 	landscape := lr.landscapes.Find(chunkPoint, tile, lr.chunks[chunkPoint].Biomes[tile.X][tile.Y])
