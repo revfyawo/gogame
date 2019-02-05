@@ -10,6 +10,7 @@ type Landscape struct {
 	ecs.BasicEntity
 	components.Biome
 	components.Landscape
+	components.LandscapeRender
 }
 
 func NewLandscape(biome components.Biome) *Landscape {

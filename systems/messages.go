@@ -11,6 +11,7 @@ const (
 	ChangeScaleMessageType
 	SetCameraPositionMessageType
 	GenerateWorldMessageType
+	NewLandscapesMessageType
 )
 
 type NewChunkMessage struct {
@@ -41,4 +42,12 @@ type GenerateWorldMessage struct{}
 
 func (GenerateWorldMessage) Type() ecs.MessageType {
 	return GenerateWorldMessageType
+}
+
+type NewLandscapesMessage struct {
+	Landscapes Landscapes
+}
+
+func (NewLandscapesMessage) Type() ecs.MessageType {
+	return NewLandscapesMessageType
 }

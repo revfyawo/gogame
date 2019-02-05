@@ -58,6 +58,7 @@ func (lg *LandscapeGen) Update() {
 			lg.landscapes.Merge(landscapes)
 		}
 	}
+	engine.Message.Dispatch(NewLandscapesMessage{*lg.landscapes})
 }
 
 func (*LandscapeGen) RemoveEntity(*ecs.BasicEntity) {}
