@@ -98,23 +98,17 @@ func (lg *LandscapeGen) generateLandscape() {
 			if j != components.ChunkTile-1 {
 				biomeDown = chunk.Biomes[i][j+1]
 				tileDown = sdl.Point{i, j + 1}
+				landscapeDown = landscapes.Find(chunkPoint, tileDown, biomeDown)
 			}
 
 			if i != 0 && biome == biomeLeft && landscape != landscapeLeft {
-				if landscape.Size() > landscapeLeft.Size() {
-					landscape.Merge(landscapeLeft)
-				} else {
-					landscapeLeft.Merge(landscape)
-					landscape = landscapeLeft
-				}
+				landscape = landscapes.MergeLandscape(landscape, landscapeLeft)
 			}
 			if j != 0 && biome == biomeUp && landscape != landscapeUp {
-				if landscape.Size() > landscapeUp.Size() {
-					landscape.Merge(landscapeUp)
-				} else {
-					landscapeUp.Merge(landscape)
-					landscape = landscapeUp
-				}
+				landscape = landscapes.MergeLandscape(landscape, landscapeUp)
+			}
+			if i != 0 && j != components.ChunkTile-1 && biome == biomeDown && landscape != landscapeDown {
+				landscape = landscapes.MergeLandscape(landscape, landscapeDown)
 			}
 
 			if i != components.ChunkTile-1 && biome == biomeRight {
@@ -124,9 +118,9 @@ func (lg *LandscapeGen) generateLandscape() {
 				landscapeRight.AddTile(chunkPoint, tileRight)
 				landscapes.Add(landscapeRight)
 			}
-			if j != components.ChunkTile-1 && biome == biomeDown {
+			if i == 0 && j != components.ChunkTile-1 && biome == biomeDown {
 				landscape.AddTile(chunkPoint, tileDown)
-			} else if j != components.ChunkTile-1 {
+			} else if i == 0 && j != components.ChunkTile-1 {
 				landscapeDown = entities.NewLandscape(biomeDown)
 				landscapeDown.AddTile(chunkPoint, tileDown)
 				landscapes.Add(landscapeDown)
