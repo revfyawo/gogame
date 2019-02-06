@@ -97,10 +97,33 @@ func (lr *LandscapeRender) UpdateFrame() {
 		return
 	}
 
-	chunkPos := screenPos[mousePos.Chunk]
+	clipRect := sdl.Rect{0, 0, landscape.ChunkRect.W, landscape.ChunkRect.H}
+	if diff := visible.X - landscape.ChunkRect.X; diff > 0 {
+		clipRect.X += diff
+		clipRect.W -= diff
+	}
+	if diff := visible.Y - landscape.ChunkRect.Y; diff > 0 {
+		clipRect.Y += diff
+		clipRect.H -= diff
+	}
+	if diff := landscape.ChunkRect.X + landscape.ChunkRect.W - 1 - (visible.X + visible.W - 1); diff > 0 {
+		clipRect.W -= diff
+	}
+	if diff := landscape.ChunkRect.Y + landscape.ChunkRect.H - 1 - (visible.Y + visible.H - 1); diff > 0 {
+		clipRect.H -= diff
+	}
+	landWidth := scaledCS * clipRect.W
+	landHeight := scaledCS * clipRect.H
+	landPos := screenPos[sdl.Point{landscape.ChunkRect.X + clipRect.X, landscape.ChunkRect.Y + clipRect.Y}]
+
+	clipRect.X *= components.ChunkSize
+	clipRect.Y *= components.ChunkSize
+	clipRect.W *= components.ChunkSize
+	clipRect.H *= components.ChunkSize
+
 	// Generating border texture if different from last frame
 	if landscape != lr.lastLandscape || changed || landscape.BorderTex == nil {
-		surface, err := sdl.CreateRGBSurface(0, components.ChunkSize, components.ChunkSize, 32, 0xff0000, 0xff00, 0xff, 0xff000000)
+		surface, err := sdl.CreateRGBSurface(0, landscape.ChunkRect.W*components.ChunkSize, landscape.ChunkRect.H*components.ChunkSize, 32, 0xff0000, 0xff00, 0xff, 0xff000000)
 		if err != nil {
 			panic(err)
 		}
@@ -113,10 +136,15 @@ func (lr *LandscapeRender) UpdateFrame() {
 		}
 
 		// Color border tiles white
-		for tile := range border[chunkPoint] {
-			err = surface.FillRect(&sdl.Rect{tile.X * components.TileSize, tile.Y * components.TileSize, components.TileSize, components.TileSize}, 0xffffffff)
-			if err != nil {
-				panic(err)
+		for x := int32(0); x < landscape.ChunkRect.W; x++ {
+			for y := int32(0); y < landscape.ChunkRect.H; y++ {
+				chunkPoint := sdl.Point{landscape.ChunkRect.X + x, landscape.ChunkRect.Y + y}
+				for tile := range border[chunkPoint] {
+					err = surface.FillRect(&sdl.Rect{x*components.ChunkSize + tile.X*components.TileSize, y*components.ChunkSize + tile.Y*components.TileSize, components.TileSize, components.TileSize}, 0xffffffff)
+					if err != nil {
+						panic(err)
+					}
+				}
 			}
 		}
 
@@ -146,7 +174,7 @@ func (lr *LandscapeRender) UpdateFrame() {
 	}
 
 	// Rendering landscape border
-	err := engine.Renderer.Copy(landscape.BorderTex, nil, &sdl.Rect{chunkPos.X, chunkPos.Y, scaledCS, scaledCS})
+	err := engine.Renderer.Copy(landscape.BorderTex, &clipRect, &sdl.Rect{landPos.X, landPos.Y, landWidth, landHeight})
 	if err != nil {
 		panic(err)
 	}
