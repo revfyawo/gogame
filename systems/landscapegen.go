@@ -9,19 +9,25 @@ import (
 	"math"
 )
 
+type landscapeWorkDone struct {
+	*Landscapes
+	sdl.Point
+}
+
 type LandscapeGen struct {
 	chunks     map[sdl.Point]*entities.Chunk
 	messages   chan ecs.Message
 	landscapes *Landscapes
 	toGenerate []*entities.Chunk
+	generated  map[sdl.Point]bool
 	workChan   chan *entities.Chunk
-	doneChan   chan *Landscapes
+	doneChan   chan landscapeWorkDone
 }
 
 func (lg *LandscapeGen) New(*ecs.World) {
 	lg.messages = make(chan ecs.Message, 10)
 	lg.workChan = make(chan *entities.Chunk, parallelGen)
-	lg.doneChan = make(chan *Landscapes, parallelGen)
+	lg.doneChan = make(chan landscapeWorkDone, parallelGen)
 	engine.Message.Listen(GenerateWorldMessageType, lg.messages)
 	engine.Message.Listen(NewChunkMessageType, lg.messages)
 }
@@ -38,6 +44,7 @@ func (lg *LandscapeGen) Update() {
 				lg.toGenerate = append(lg.toGenerate, chunk)
 			case GenerateWorldMessage:
 				lg.chunks = make(map[sdl.Point]*entities.Chunk)
+				lg.generated = make(map[sdl.Point]bool)
 				lg.landscapes = NewLandscapes()
 				lg.toGenerate = []*entities.Chunk{}
 			}
@@ -55,7 +62,9 @@ func (lg *LandscapeGen) Update() {
 		lg.toGenerate = lg.toGenerate[max:]
 		for i := 0; i < max; i++ {
 			landscapes := <-lg.doneChan
-			lg.landscapes.Merge(landscapes)
+			lg.landscapes.Merge(landscapes.Landscapes)
+			lg.generated[landscapes.Point] = true
+			lg.mergeNeighbours(landscapes.Point)
 		}
 	}
 	engine.Message.Dispatch(NewLandscapesMessage{*lg.landscapes})
@@ -128,5 +137,62 @@ func (lg *LandscapeGen) generateLandscape() {
 
 		}
 	}
-	lg.doneChan <- landscapes
+	lg.doneChan <- landscapeWorkDone{landscapes, chunkPoint}
+}
+
+func (lg *LandscapeGen) mergeNeighbours(chunk sdl.Point) {
+	left := sdl.Point{chunk.X - 1, chunk.Y}
+	up := sdl.Point{chunk.X, chunk.Y - 1}
+	right := sdl.Point{chunk.X + 1, chunk.Y}
+	down := sdl.Point{chunk.X, chunk.Y + 1}
+
+	generated := lg.chunks[chunk]
+	if lg.generated[left] {
+		leftChunk := lg.chunks[left]
+		for i := int32(0); i < components.ChunkTile; i++ {
+			biome := generated.Biomes[0][i]
+			landscape := lg.landscapes.Find(chunk, sdl.Point{0, i}, biome)
+			biomeLeft := leftChunk.Biomes[components.ChunkTile-1][i]
+			landscapeLeft := lg.landscapes.Find(left, sdl.Point{components.ChunkTile - 1, i}, biomeLeft)
+			if biome == biomeLeft && landscape != landscapeLeft {
+				lg.landscapes.MergeLandscape(landscape, landscapeLeft)
+			}
+		}
+	}
+	if lg.generated[up] {
+		upChunk := lg.chunks[up]
+		for i := int32(0); i < components.ChunkTile; i++ {
+			biome := generated.Biomes[i][0]
+			landscape := lg.landscapes.Find(chunk, sdl.Point{i, 0}, biome)
+			biomeUp := upChunk.Biomes[i][components.ChunkTile-1]
+			landscapeUp := lg.landscapes.Find(up, sdl.Point{i, components.ChunkTile - 1}, biomeUp)
+			if biome == biomeUp && landscape != landscapeUp {
+				lg.landscapes.MergeLandscape(landscape, landscapeUp)
+			}
+		}
+	}
+	if lg.generated[right] {
+		rightChunk := lg.chunks[right]
+		for i := int32(0); i < components.ChunkTile; i++ {
+			biome := generated.Biomes[components.ChunkTile-1][i]
+			landscape := lg.landscapes.Find(chunk, sdl.Point{components.ChunkTile - 1, i}, biome)
+			biomeRight := rightChunk.Biomes[0][i]
+			landscapeRight := lg.landscapes.Find(right, sdl.Point{0, i}, biomeRight)
+			if biome == biomeRight && landscape != landscapeRight {
+				lg.landscapes.MergeLandscape(landscape, landscapeRight)
+			}
+		}
+	}
+	if lg.generated[down] {
+		downChunk := lg.chunks[down]
+		for i := int32(0); i < components.ChunkTile; i++ {
+			biome := generated.Biomes[i][components.ChunkTile-1]
+			landscape := lg.landscapes.Find(chunk, sdl.Point{i, components.ChunkTile - 1}, biome)
+			biomeDown := downChunk.Biomes[i][0]
+			landscapeDown := lg.landscapes.Find(down, sdl.Point{i, 0}, biomeDown)
+			if biome == biomeDown && landscape != landscapeDown {
+				lg.landscapes.MergeLandscape(landscape, landscapeDown)
+			}
+		}
+	}
 }
