@@ -2,37 +2,49 @@ package components
 
 import (
 	"github.com/veandco/go-sdl2/sdl"
+	"sync"
 )
 
 type Landscape struct {
 	Tiles            map[sdl.Point]map[sdl.Point]bool
-	chunkRect        sdl.Rect
+	ChunkRect        sdl.Rect
+	size             int
+	lock             sync.Mutex
 	border           map[sdl.Point]map[sdl.Point]bool
 	regenerateBorder bool
 }
 
 func (l *Landscape) AddTile(chunk, tile sdl.Point) {
-	if _, ok := l.Tiles[chunk]; !ok {
-		l.Tiles[chunk] = make(map[sdl.Point]bool)
-		if l.chunkRect.W == 0 && l.chunkRect.H == 0 {
-			l.chunkRect = sdl.Rect{chunk.X, chunk.Y, 1, 1}
-		} else if diff := l.chunkRect.X - chunk.X; diff > 0 {
-			l.chunkRect.X -= diff
-			l.chunkRect.W += diff
-		} else if diff := l.chunkRect.Y - chunk.Y; diff > 0 {
-			l.chunkRect.Y -= diff
-			l.chunkRect.H += diff
-		} else if diff := chunk.X - l.chunkRect.X - l.chunkRect.W + 1; diff > 0 {
-			l.chunkRect.W += diff
-		} else if diff := chunk.Y - l.chunkRect.Y - l.chunkRect.H + 1; diff > 0 {
-			l.chunkRect.H += diff
-		}
-	}
-	l.Tiles[chunk][tile] = true
+	l.lock.Lock()
+	defer l.lock.Unlock()
+	l.addtile(chunk, tile)
 	l.regenerateBorder = true
 }
 
+func (l *Landscape) addtile(chunk, tile sdl.Point) {
+	if _, ok := l.Tiles[chunk]; !ok {
+		l.Tiles[chunk] = make(map[sdl.Point]bool)
+		if l.ChunkRect.W == 0 && l.ChunkRect.H == 0 {
+			l.ChunkRect = sdl.Rect{chunk.X, chunk.Y, 1, 1}
+		} else if diff := l.ChunkRect.X - chunk.X; diff > 0 {
+			l.ChunkRect.X -= diff
+			l.ChunkRect.W += diff
+		} else if diff := l.ChunkRect.Y - chunk.Y; diff > 0 {
+			l.ChunkRect.Y -= diff
+			l.ChunkRect.H += diff
+		} else if diff := chunk.X - l.ChunkRect.X - l.ChunkRect.W + 1; diff > 0 {
+			l.ChunkRect.W += diff
+		} else if diff := chunk.Y - l.ChunkRect.Y - l.ChunkRect.H + 1; diff > 0 {
+			l.ChunkRect.H += diff
+		}
+	}
+	l.Tiles[chunk][tile] = true
+	l.size++
+}
+
 func (l *Landscape) Contains(chunk, tile sdl.Point) bool {
+	l.lock.Lock()
+	defer l.lock.Unlock()
 	c, ok := l.Tiles[chunk]
 	if !ok {
 		return false
@@ -49,24 +61,29 @@ func (l *Landscape) Merge(other *Landscape) {
 	if other == nil {
 		return
 	}
-
+	l.lock.Lock()
+	defer l.lock.Unlock()
+	other.lock.Lock()
+	defer other.lock.Unlock()
 	for chunkPoint, chunk := range other.Tiles {
 		for tilePoint, tile := range chunk {
-			l.Tiles[chunkPoint][tilePoint] = tile
+			if tile {
+				l.addtile(chunkPoint, tilePoint)
+			}
 		}
 	}
 	l.regenerateBorder = true
 }
 
 func (l *Landscape) Size() int {
-	var size int
-	for _, chunk := range l.Tiles {
-		size += len(chunk)
-	}
-	return size
+	l.lock.Lock()
+	defer l.lock.Unlock()
+	return l.size
 }
 
 func (l *Landscape) Border() (border map[sdl.Point]map[sdl.Point]bool, changed bool) {
+	l.lock.Lock()
+	defer l.lock.Unlock()
 	if !l.regenerateBorder && l.border != nil && len(l.border) > 0 {
 		return l.border, false
 	} else if l.regenerateBorder {
@@ -112,15 +129,6 @@ func (l *Landscape) Border() (border map[sdl.Point]map[sdl.Point]bool, changed b
 
 	l.border = border
 	return border, true
-}
-
-func (l *Landscape) borderContains(border []ChunkTilePosition, pos ChunkTilePosition) bool {
-	for _, borderPos := range border {
-		if pos == borderPos {
-			return true
-		}
-	}
-	return false
 }
 
 func (l *Landscape) contour(first, firstPrevious ChunkTilePosition) map[sdl.Point]map[sdl.Point]bool {
