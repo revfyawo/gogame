@@ -92,11 +92,10 @@ func (l *Landscape) Border() (border map[sdl.Point]map[sdl.Point]bool, changed b
 
 	border = make(map[sdl.Point]map[sdl.Point]bool)
 	inside := false
-	pos := ChunkTilePosition{sdl.Point{l.chunkRect.X, l.chunkRect.Y}, sdl.Point{0, 0}}
-	previous := pos.Up()
-	for chunkX := l.chunkRect.X; chunkX < l.chunkRect.X+l.chunkRect.W; chunkX++ {
-		for chunkY := l.chunkRect.Y; chunkY < l.chunkRect.Y+l.chunkRect.H; chunkY++ {
-			for tileX := int32(0); tileX < ChunkTile; tileX++ {
+	var pos, previous ChunkTilePosition
+	for chunkX := l.ChunkRect.X; chunkX < l.ChunkRect.X+l.ChunkRect.W; chunkX++ {
+		for tileX := int32(0); tileX < ChunkTile; tileX++ {
+			for chunkY := l.ChunkRect.Y; chunkY < l.ChunkRect.Y+l.ChunkRect.H; chunkY++ {
 				for tileY := int32(0); tileY < ChunkTile; tileY++ {
 					chunkPoint := sdl.Point{chunkX, chunkY}
 					tilePoint := sdl.Point{tileX, tileY}
