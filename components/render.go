@@ -9,3 +9,7 @@ type Render struct {
 type ChunkRender struct {
 	TilesTex *sdl.Texture
 }
+
+type LandscapeRender struct {
+	BorderTex *sdl.Texture
+}

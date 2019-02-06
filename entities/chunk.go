@@ -10,20 +10,18 @@ import (
 type Chunk struct {
 	ecs.BasicEntity
 	components.Chunk
-	components.Space
+	components.Position
 	components.ChunkRender
 }
 
-func NewChunk(space components.Space) *Chunk {
-	chunk := Chunk{BasicEntity: ecs.NewBasic(), Space: space}
-	chunk.Rect.W = components.ChunkSize
-	chunk.Rect.H = components.ChunkSize
+func NewChunk(position components.Position) *Chunk {
+	chunk := Chunk{BasicEntity: ecs.NewBasic(), Position: position}
 	return &chunk
 }
 
 // Generates a chunk heigh, rain and temp
 func (c *Chunk) Generate(height, temp, rain components.Noise) {
-	c.Chunk.Generate(height, temp, rain, c.Rect.X, c.Rect.Y)
+	c.Chunk.Generate(height, temp, rain, c.X, c.Y)
 }
 
 // Generates the chunk texture
