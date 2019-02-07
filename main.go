@@ -21,6 +21,7 @@ func (s *defaultScene) Setup(w *ecs.World) {
 	w.AddSystem(&systems.LandscapeGen{})
 	w.AddSystem(&systems.LandscapeRender{})
 	w.AddSystem(&systems.ChunkGen{})
+	w.AddSystem(&systems.GUI{})
 	w.AddSystem(&systems.UpdatesCounter{})
 }
 

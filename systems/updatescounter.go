@@ -2,19 +2,20 @@ package systems
 
 import (
 	"fmt"
+	"github.com/revfyawo/gogame/components"
 	"github.com/revfyawo/gogame/ecs"
 	"github.com/revfyawo/gogame/engine"
+	"github.com/revfyawo/gogame/entities"
 	"github.com/veandco/go-sdl2/sdl"
-	"github.com/veandco/go-sdl2/ttf"
 	"sync"
 	"time"
 )
 
+const LabelName = "updates-counter"
+
 type UpdatesCounter struct {
-	font        *ttf.Font
-	texture     *sdl.Texture
-	size        sdl.Rect
 	lock        sync.Mutex
+	gui         *entities.GUI
 	updateRate  int
 	frameRate   int
 	rateChanged bool
@@ -22,86 +23,40 @@ type UpdatesCounter struct {
 	frameCount  int
 	lastSecond  time.Time
 	enabled     bool
-	disable     bool
 }
 
 func (uc *UpdatesCounter) New(*ecs.World) {
-	font, err := ttf.OpenFont("assets/fonts/Go-Mono.ttf", 32)
-	if err != nil {
-		panic(err)
-	}
-	uc.font = font
 	engine.Input.Register(sdl.SCANCODE_F2)
+
+	gui := &entities.GUI{}
+
+	// Component
+	gui.Type = components.GUILabel
+	gui.Label = uc.text()
+	gui.Font = components.GetFont(components.MonoRegular, 32)
+	gui.Background = true
+
+	// Entity
+	gui.Name = LabelName
+	gui.Position = entities.GUIPosTop
+
+	uc.gui = gui
 }
 
 func (uc *UpdatesCounter) UpdateFrame() {
 	uc.lock.Lock()
+	defer uc.lock.Unlock()
 	if !uc.enabled {
-		// Destroy texture if just disabled
-		if uc.disable && uc.texture != nil {
-			err := uc.texture.Destroy()
-			if err != nil {
-				panic(err)
-			}
-			uc.texture = nil
-			uc.disable = false
-		}
-		uc.lock.Unlock()
 		return
 	}
+
 	uc.frameCount++
-	update := uc.updateRate
-	frame := uc.frameRate
-	changed := uc.rateChanged
-	uc.lock.Unlock()
 
-	// Regenerate texture if changed, or just enabled
-	if changed || uc.texture == nil {
-		if changed {
-			uc.lock.Lock()
-			uc.rateChanged = false
-			uc.lock.Unlock()
-		}
-		text := fmt.Sprintf("%v FPS / %v UPS", frame, update)
-		fontSurface, err := uc.font.RenderUTF8Blended(text, sdl.Color{0xff, 0xff, 0xff, 0xff})
-		if err != nil {
-			panic(err)
-		}
-		defer fontSurface.Free()
-
-		surface, err := sdl.CreateRGBSurface(0, fontSurface.W, fontSurface.H, 32, 0xff0000, 0xff00, 0xff, 0xff000000)
-		if err != nil {
-			panic(err)
-		}
-		defer surface.Free()
-		err = surface.FillRect(nil, 0x80000000)
-		if err != nil {
-			panic(err)
-		}
-		err = fontSurface.Blit(nil, surface, &sdl.Rect{0, 0, surface.W, surface.H})
-		if err != nil {
-			panic(err)
-		}
-
-		if uc.texture != nil {
-			err = uc.texture.Destroy()
-			if err != nil {
-				panic(err)
-			}
-			uc.texture = nil
-		}
-
-		texture, err := engine.Renderer.CreateTextureFromSurface(surface)
-		if err != nil {
-			panic(err)
-		}
-		uc.texture = texture
-		uc.size.W, uc.size.H = surface.W, surface.H
-	}
-
-	err := engine.Renderer.Copy(uc.texture, nil, &sdl.Rect{10, 10, uc.size.W, uc.size.H})
-	if err != nil {
-		panic(err)
+	// Regenerate text if changed, and destroy texture
+	if uc.rateChanged {
+		uc.rateChanged = false
+		uc.gui.Label = uc.text()
+		uc.gui.DestroyTexture()
 	}
 }
 
@@ -110,8 +65,10 @@ func (uc *UpdatesCounter) Update() {
 	defer uc.lock.Unlock()
 	if engine.Input.JustPressed(sdl.SCANCODE_F2) {
 		uc.enabled = !uc.enabled
-		if !uc.enabled {
-			uc.disable = true
+		if uc.enabled {
+			engine.Message.Dispatch(GUIAddMessage{uc.gui})
+		} else {
+			engine.Message.Dispatch(GUIRemoveMessage{LabelName})
 		}
 	}
 	if !uc.enabled {
@@ -130,3 +87,7 @@ func (uc *UpdatesCounter) Update() {
 }
 
 func (*UpdatesCounter) RemoveEntity(*ecs.BasicEntity) {}
+
+func (uc *UpdatesCounter) text() string {
+	return fmt.Sprintf("%v FPS / %v UPS", uc.frameRate, uc.updateRate)
+}

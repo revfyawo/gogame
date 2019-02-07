@@ -12,6 +12,8 @@ const (
 	SetCameraPositionMessageType
 	GenerateWorldMessageType
 	NewLandscapesMessageType
+	GUIAddMessageType
+	GUIRemoveMessageType
 )
 
 type NewChunkMessage struct {
@@ -50,4 +52,20 @@ type NewLandscapesMessage struct {
 
 func (NewLandscapesMessage) Type() ecs.MessageType {
 	return NewLandscapesMessageType
+}
+
+type GUIAddMessage struct {
+	Element *entities.GUI
+}
+
+func (GUIAddMessage) Type() ecs.MessageType {
+	return GUIAddMessageType
+}
+
+type GUIRemoveMessage struct {
+	Name string
+}
+
+func (GUIRemoveMessage) Type() ecs.MessageType {
+	return GUIRemoveMessageType
 }
