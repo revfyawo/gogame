@@ -8,10 +8,12 @@ import (
 )
 
 type MouseChunk struct {
-	camera   *Camera
-	chunkPos components.ChunkPosition
-	lastPos  sdl.Point
-	position sdl.Point
+	camera       *Camera
+	lastCamPos   components.ChunkPosition
+	lastCamScale float64
+	chunkPos     components.ChunkPosition
+	lastPos      sdl.Point
+	position     sdl.Point
 }
 
 func (mc *MouseChunk) New(world *ecs.World) {
@@ -29,9 +31,22 @@ func (mc *MouseChunk) New(world *ecs.World) {
 }
 
 func (mc *MouseChunk) Update() {
+	update := false
 	mc.position = engine.Input.MousePosition()
-	if mc.position != mc.lastPos {
+	if mc.lastPos != mc.position {
 		mc.lastPos = mc.position
+		update = true
+	}
+	if mc.lastCamPos != mc.camera.Position() {
+		mc.lastCamPos = mc.camera.Position()
+		update = true
+	}
+	if mc.lastCamScale != mc.camera.Scale() {
+		mc.lastCamScale = mc.camera.Scale()
+		update = true
+	}
+
+	if update {
 		camChunkPos := mc.camera.Position()
 		scale := mc.camera.Scale()
 		w, h, err := engine.Renderer.GetOutputSize()
