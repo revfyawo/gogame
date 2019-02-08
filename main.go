@@ -23,6 +23,7 @@ func (s *defaultScene) Setup(w *ecs.World) {
 	w.AddSystem(&systems.ChunkGen{})
 	w.AddSystem(&systems.GUI{})
 	w.AddSystem(&systems.UpdatesCounter{})
+	w.AddSystem(&systems.PauseMenu{})
 }
 
 var cpuprofile = flag.Bool("cpuprofile", false, "profile CPU usage")

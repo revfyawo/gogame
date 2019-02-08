@@ -70,6 +70,21 @@ func (gui *GUI) UpdateFrame() {
 		}
 		top.X += e.W + guiGap
 	}
+
+	w, h, err := engine.Renderer.GetOutputSize()
+	if err != nil {
+		panic(err)
+	}
+	center := sdl.Point{w / 2, h / 2}
+	for _, e := range gui.elements[entities.GUIPosCenter] {
+		if e.Texture == nil {
+			e.GenerateTexture()
+		}
+		err = engine.Renderer.Copy(e.Texture, nil, &sdl.Rect{center.X - e.W/2, center.Y - e.H/2, e.W, e.H})
+		if err != nil {
+			panic(err)
+		}
+	}
 }
 
 func (gui *GUI) RemoveEntity(*ecs.BasicEntity) {}
