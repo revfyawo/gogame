@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-const LabelName = "updates-counter"
+const UpdateCounterName = "updates-counter"
 
 type UpdatesCounter struct {
 	lock        sync.Mutex
@@ -32,12 +32,12 @@ func (uc *UpdatesCounter) New(*ecs.World) {
 
 	// Component
 	gui.Type = components.GUILabel
-	gui.Label = uc.text()
+	gui.Text = uc.text()
 	gui.Font = components.GetFont(components.MonoRegular, 32)
 	gui.Background = true
 
 	// Entity
-	gui.Name = LabelName
+	gui.Name = UpdateCounterName
 	gui.Position = entities.GUIPosTop
 
 	uc.gui = gui
@@ -55,7 +55,7 @@ func (uc *UpdatesCounter) UpdateFrame() {
 	// Regenerate text if changed, and destroy texture
 	if uc.rateChanged {
 		uc.rateChanged = false
-		uc.gui.Label = uc.text()
+		uc.gui.Text = uc.text()
 		uc.gui.DestroyTexture()
 	}
 }
@@ -68,7 +68,7 @@ func (uc *UpdatesCounter) Update() {
 		if uc.enabled {
 			engine.Message.Dispatch(GUIAddMessage{uc.gui})
 		} else {
-			engine.Message.Dispatch(GUIRemoveMessage{LabelName})
+			engine.Message.Dispatch(GUIRemoveMessage{UpdateCounterName})
 		}
 	}
 	if !uc.enabled {
